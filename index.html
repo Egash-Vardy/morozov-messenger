@@ -4,52 +4,44 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <title>Morozov Ultra</title>
+    <title>WB Messenger Ultra</title>
     <style>
-        html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; font-family: -apple-system, system-ui, sans-serif; }
         .hidden { display: none !important; }
         
-        /* Боковое меню */
-        #side-menu { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 2000; width: 280px; }
+        #side-menu { transition: transform 0.3s ease; z-index: 2000; width: 280px; }
         .menu-open { transform: translateX(0) !important; }
         .menu-overlay { background: rgba(0,0,0,0.6); transition: opacity 0.3s; z-index: 1500; }
 
-        /* Чат */
         #chat-window { 
             background-color: #e5ddd5; 
             background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
-            display: flex; flex-direction: column;
         }
 
-        /* Сообщения */
-        .msg { max-width: 80%; padding: 8px 14px; border-radius: 16px; margin-bottom: 4px; font-size: 15px; line-height: 1.4; }
-        .msg-mine { background: #effdde; align-self: flex-end; border-bottom-right-radius: 4px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); color: #000; }
-        .msg-their { background: #ffffff; align-self: flex-start; border-bottom-left-radius: 4px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); color: #000; }
+        .msg { max-width: 80%; padding: 8px 14px; border-radius: 16px; margin-bottom: 5px; font-size: 15px; }
+        .msg-mine { background: #effdde; align-self: flex-end; border-bottom-right-radius: 4px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
+        .msg-their { background: #ffffff; align-self: flex-start; border-bottom-left-radius: 4px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
 
-        /* Тёмная тема */
-        body.dark-mode { background-color: #0e1621; color: white; }
-        .dark-mode #side-menu { background-color: #17212b; color: white; }
+        .dark-mode { background-color: #0e1621; color: white; }
+        .dark-mode #side-menu { background-color: #17212b; }
         .dark-mode header { background-color: #242f3d !important; }
         .dark-mode #contact-list-screen { background-color: #0e1621; }
-        .dark-mode .contact-item { background-color: #17212b; border-bottom: 1px solid #0e1621; color: white; }
+        .dark-mode .contact-item { background-color: #17212b; border-bottom-color: #0e1621; }
         .dark-mode .msg-their { background: #182533; color: white; }
         .dark-mode .msg-mine { background: #2b5278; color: white; }
-        .dark-mode #chat-window { background-color: #0e1621; filter: contrast(0.9) brightness(0.8); }
-        .dark-mode #input-area { background-color: #17212b; border-top: 1px solid #0e1621; }
-        .dark-mode input { background-color: #242f3d; color: white; }
+        .dark-mode #input-area { background-color: #17212b; border-top-color: #0e1621; }
     </style>
 </head>
-<body class="flex flex-col bg-white transition-colors duration-300">
+<body class="flex flex-col bg-white">
 
     <div id="call-overlay" class="fixed inset-0 bg-slate-900 z-[5000] hidden flex flex-col items-center justify-around text-white p-10">
         <div class="text-center">
-            <div id="call-avatar" class="w-32 h-32 bg-blue-500 rounded-full mx-auto mb-6 flex items-center justify-center text-5xl font-bold shadow-2xl border-4 border-white/20 uppercase">?</div>
+            <div id="call-avatar" class="w-32 h-32 bg-blue-500 rounded-full mx-auto mb-6 flex items-center justify-center text-5xl font-bold uppercase border-4 border-white/20 shadow-2xl">?</div>
             <h2 id="call-name" class="text-4xl font-bold mb-2">Контакт</h2>
-            <p id="call-status" class="text-blue-400 animate-pulse text-xl font-medium">Вызов...</p>
+            <p class="text-blue-400 animate-pulse text-xl">Вызов...</p>
         </div>
-        <button onclick="endCall()" class="w-24 h-24 bg-red-500 rounded-full flex items-center justify-center text-4xl shadow-2xl active:scale-90 transition transform">
+        <button onclick="endCall()" class="w-24 h-24 bg-red-500 rounded-full flex items-center justify-center text-4xl shadow-2xl active:scale-90 transition">
             <i class="fas fa-phone-slash rotate-[135deg]"></i>
         </button>
     </div>
@@ -57,27 +49,25 @@
     <div id="menu-overlay" class="fixed inset-0 menu-overlay opacity-0 pointer-events-none" onclick="toggleMenu()"></div>
     <div id="side-menu" class="fixed top-0 left-0 h-full bg-white -translate-x-full shadow-2xl flex flex-col">
         <div class="bg-[#517da2] p-8 text-white">
-            <div id="u-avatar" class="w-16 h-16 bg-blue-400 rounded-full mb-4 flex items-center justify-center text-2xl font-bold border-2 border-white/20 uppercase">?</div>
+            <div id="u-avatar" class="w-16 h-16 bg-blue-400 rounded-full mb-4 flex items-center justify-center text-2xl font-bold uppercase border-2 border-white/20">?</div>
             <div id="u-name" class="font-bold text-xl">Пользователь</div>
-            <div id="u-phone" class="text-blue-100 opacity-70 text-sm">Номер</div>
         </div>
         <div class="flex-1 py-4">
             <button onclick="addNewContact()" class="w-full flex items-center gap-6 px-8 py-4 text-lg active:bg-gray-100"><i class="fas fa-user-plus text-blue-500"></i> Новый контакт</button>
             <button onclick="toggleDark()" class="w-full flex items-center gap-6 px-8 py-4 text-lg active:bg-gray-100"><i class="fas fa-moon text-purple-500"></i> Тёмная тема</button>
-            <div class="border-t my-4"></div>
-            <button onclick="logout()" class="w-full flex items-center gap-6 px-8 py-4 text-lg text-red-500 active:bg-red-50"><i class="fas fa-sign-out-alt"></i> Выход</button>
+            <button onclick="logout()" class="w-full flex items-center gap-6 px-8 py-4 text-lg text-red-500 active:bg-red-50 mt-10"><i class="fas fa-sign-out-alt"></i> Выход</button>
         </div>
     </div>
 
-    <header class="bg-[#517da2] h-16 flex items-center justify-between px-4 text-white shadow-lg shrink-0 z-[1000] pt-[env(safe-area-inset-top)]">
+    <header class="bg-[#517da2] h-16 flex items-center justify-between px-4 text-white shadow-lg shrink-0 z-[1000]">
         <div class="flex items-center gap-3">
             <button id="m-btn" onclick="toggleMenu()" class="w-10 h-10 flex items-center justify-center text-xl"><i class="fas fa-bars"></i></button>
             <button id="b-btn" onclick="closeChat()" class="hidden w-10 h-10 flex items-center justify-center text-xl"><i class="fas fa-arrow-left"></i></button>
-            <h1 id="h-title" class="font-bold text-lg truncate max-w-[140px]">Morozov Chat</h1>
+            <h1 id="h-title" class="font-bold text-lg">WB Chat</h1>
         </div>
         <div id="call-box" class="hidden flex gap-3">
-            <button onclick="initCall()" class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-base active:bg-white/40"><i class="fas fa-phone-alt"></i></button>
-            <button onclick="initCall()" class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-base active:bg-white/40"><i class="fas fa-video"></i></button>
+            <button onclick="initCall()" class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center active:bg-white/40"><i class="fas fa-phone-alt"></i></button>
+            <button onclick="initCall()" class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center active:bg-white/40"><i class="fas fa-video"></i></button>
         </div>
     </header>
 
@@ -99,8 +89,6 @@
         let histories = JSON.parse(localStorage.getItem('wb_histories')) || {};
         let activeId = null;
         let isDark = localStorage.getItem('wb_dark') === 'true';
-
-        // Аудио переменные
         let audioCtx = null;
         let ringInterval = null;
 
@@ -108,16 +96,24 @@
 
         if (!user) {
             const name = prompt("Ваше имя:");
-            const phone = prompt("Ваш телефон:");
-            if(name && phone) {
-                user = {name, phone};
+            if(name) {
+                user = {name};
                 localStorage.setItem('wb_profile', JSON.stringify(user));
                 location.reload();
             }
         } else {
             document.getElementById('u-name').innerText = user.name;
-            document.getElementById('u-phone').innerText = user.phone;
             document.getElementById('u-avatar').innerText = user.name[0];
+        }
+
+        // РАЗБЛОКИРОВКА ЗВУКА
+        function unlockAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
         }
 
         function toggleMenu() {
@@ -140,8 +136,11 @@
                 const div = document.createElement('div');
                 div.className = "contact-item p-4 flex items-center gap-4 bg-white border-b active:bg-gray-100 cursor-pointer";
                 div.innerHTML = `<div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-xl uppercase">${c.name[0]}</div>
-                                 <div class="font-bold text-lg">${c.name}</div>`;
-                div.onclick = () => openChat(c);
+                                 <div class="font-bold text-lg text-black dark:text-white">${c.name}</div>`;
+                div.onclick = () => {
+                    unlockAudio(); // Магия: разблокируем звук при клике на контакт
+                    openChat(c);
+                };
                 list.appendChild(div);
             });
         }
@@ -200,60 +199,38 @@
             }
         }
 
-        // --- ЗВУК И ЗВОНКИ ---
-        function startRinging() {
-            // Создаем аудио контекст при первом вызове
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
+        function initCall() {
+            unlockAudio();
+            document.getElementById('call-overlay').classList.remove('hidden');
+            document.getElementById('call-name').innerText = document.getElementById('h-title').innerText;
+            document.getElementById('call-avatar').innerText = document.getElementById('h-title').innerText[0];
             
-            // Важно для мобильных: возобновляем работу контекста
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
-
             const playTone = () => {
-                if (!audioCtx) return;
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
-                
                 osc.type = 'sine';
                 osc.frequency.setValueAtTime(425, audioCtx.currentTime);
-                
                 gain.gain.setValueAtTime(0, audioCtx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.1, audioCtx.currentTime + 0.1);
+                gain.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.1);
                 gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1.2);
-                
                 osc.connect(gain);
                 gain.connect(audioCtx.destination);
-                
                 osc.start();
                 osc.stop(audioCtx.currentTime + 1.3);
             };
-
             playTone();
             ringInterval = setInterval(playTone, 4000);
         }
 
-        function initCall() {
-            document.getElementById('call-overlay').classList.remove('hidden');
-            document.getElementById('call-name').innerText = document.getElementById('h-title').innerText;
-            document.getElementById('call-avatar').innerText = document.getElementById('h-title').innerText[0];
-            startRinging();
-        }
-
         function endCall() {
             document.getElementById('call-overlay').classList.add('hidden');
-            if (ringInterval) {
-                clearInterval(ringInterval);
-                ringInterval = null;
-            }
+            clearInterval(ringInterval);
         }
 
         function logout() { localStorage.clear(); location.reload(); }
-
         render();
     </script>
 </body>
 </html>
+
 
