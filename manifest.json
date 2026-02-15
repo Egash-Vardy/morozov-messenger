@@ -1,6 +1,6 @@
 {
   "name": "Morozov Ultra",
-  "short_name": "Morozov Chat",
+  "short_name": "Morozov Ultra",
   "description": "Мой личный мессенджер с видеозвонками",
   "start_url": "./index.html",
   "display": "standalone",
@@ -14,4 +14,5 @@
       "purpose": "any maskable"
     }
   ]
+
 }
