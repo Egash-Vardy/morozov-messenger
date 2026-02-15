@@ -8,23 +8,35 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <title>WB Messenger Pro</title>
     <style>
-        html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; }
+        html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; transition: background 0.3s; }
         .hidden { display: none !important; }
+        
+        /* Боковое меню */
         #side-menu { transition: transform 0.3s ease-in-out; z-index: 1000; }
         .menu-open { transform: translateX(0) !important; }
         .menu-overlay { background: rgba(0,0,0,0.5); transition: opacity 0.3s; z-index: 900; }
+
+        /* Чат и сообщения */
         #chat-window { background-color: #e5ddd5; background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); }
-        .msg { max-width: 80%; padding: 8px 14px; border-radius: 15px; margin-bottom: 5px; font-size: 15px; }
-        .msg-mine { background: #effdde; align-self: flex-end; border-bottom-right-radius: 2px; }
-        .msg-their { background: #ffffff; align-self: flex-start; border-bottom-left-radius: 2px; }
-        #remote-video { width: 100%; height: 100%; object-fit: cover; background: #1a202c; }
-        #local-video { position: absolute; top: 20px; right: 20px; width: 90px; height: 120px; object-fit: cover; border: 2px solid white; border-radius: 12px; z-index: 1001; }
+        .msg { max-width: 80%; padding: 10px 14px; border-radius: 18px; margin-bottom: 8px; font-size: 15px; }
+        .msg-mine { background: #effdde; align-self: flex-end; border-bottom-right-radius: 4px; }
+        .msg-their { background: #ffffff; align-self: flex-start; border-bottom-left-radius: 4px; }
+
+        /* Тёмная тема */
+        body.dark-mode { background-color: #1c242c; color: white; }
+        .dark-mode #side-menu { background-color: #1c242c; color: white; }
+        .dark-mode #contact-list-screen { background-color: #1c242c; }
+        .dark-mode .msg-their { background: #242f3d; color: white; border: none; }
+        .dark-mode .msg-mine { background: #4082bc; color: white; }
+        .dark-mode #chat-window { background-color: #0e1621; background-image: opacity(0.1); }
+        .dark-mode header { background-color: #242f3d; }
+        .dark-mode input { background-color: #1c242c; color: white; border-color: #3d4b59; }
     </style>
 </head>
 <body class="bg-white flex flex-col">
 
-    <div id="login-screen" class="fixed inset-0 bg-[#517da2] z-[2000] flex items-center justify-center p-6">
-        <div class="bg-white w-full max-w-sm p-8 rounded-3xl shadow-2xl">
+    <div id="login-screen" class="fixed inset-0 bg-[#517da2] z-[5000] flex items-center justify-center p-6">
+        <div class="bg-white dark:bg-gray-800 w-full max-w-sm p-8 rounded-3xl shadow-2xl">
             <h1 class="text-2xl font-bold text-center mb-6">Вход</h1>
             <input type="text" id="reg-name" placeholder="Имя" class="w-full border p-4 rounded-xl mb-4 outline-none">
             <input type="tel" id="reg-phone" placeholder="Номер телефона" class="w-full border p-4 rounded-xl mb-6 outline-none">
@@ -32,14 +44,14 @@
         </div>
     </div>
 
-    <div id="call-overlay" class="fixed inset-0 bg-black z-[3000] hidden flex flex-col items-center justify-center text-white">
-        <video id="remote-video" autoplay playsinline></video>
-        <video id="local-video" autoplay playsinline muted class="hidden"></video>
-        <div class="absolute top-16 text-center">
-            <h2 id="call-name" class="text-3xl font-bold mb-2 font-sans">Контакт</h2>
-            <p id="call-status" class="text-blue-400 animate-pulse italic">Вызов...</p>
+    <div id="call-overlay" class="fixed inset-0 bg-black z-[4000] hidden flex flex-col items-center justify-center text-white">
+        <video id="remote-video" autoplay playsinline class="w-full h-full object-cover"></video>
+        <video id="local-video" autoplay playsinline muted class="hidden absolute top-10 right-5 w-24 h-32 border-2 border-white rounded-lg"></video>
+        <div class="absolute top-20 text-center">
+            <h2 id="call-name" class="text-3xl font-bold">Контакт</h2>
+            <p id="call-status" class="animate-pulse text-blue-400">Вызов...</p>
         </div>
-        <button onclick="endCall()" class="absolute bottom-12 w-20 h-20 bg-red-500 rounded-full flex items-center justify-center text-3xl shadow-xl">
+        <button onclick="endCall()" class="absolute bottom-12 w-20 h-20 bg-red-500 rounded-full flex items-center justify-center text-3xl">
             <i class="fas fa-phone-slash rotate-[135deg]"></i>
         </button>
     </div>
@@ -47,29 +59,26 @@
     <div id="menu-overlay" class="fixed inset-0 menu-overlay opacity-0 pointer-events-none" onclick="toggleMenu()"></div>
     <div id="side-menu" class="fixed top-0 left-0 h-full w-72 bg-white -translate-x-full shadow-2xl flex flex-col">
         <div class="bg-[#517da2] p-6 text-white">
-            <div id="user-avatar" class="w-16 h-16 bg-blue-400 rounded-full mb-4 flex items-center justify-center text-2xl font-bold border-2 border-white/30">?</div>
-            <div id="user-name-display" class="font-bold text-lg italic">Имя</div>
-            <div id="user-phone-display" class="text-blue-100 text-sm">Номер</div>
+            <div id="user-avatar" class="w-16 h-16 bg-blue-400 rounded-full mb-4 flex items-center justify-center text-2xl font-bold border-2 border-white/30 text-white">?</div>
+            <div id="user-name-display" class="font-bold text-lg">Имя</div>
+            <div id="user-phone-display" class="text-blue-100 text-sm italic">Номер</div>
         </div>
         <div class="flex-1 py-2">
-            <button onclick="addNewContact()" class="w-full flex items-center gap-6 px-6 py-4 hover:bg-gray-100 text-gray-700">
-                <i class="fas fa-user-plus"></i> <span class="font-medium">Новый контакт</span>
-            </button>
-            <button onclick="logout()" class="w-full flex items-center gap-6 px-6 py-4 hover:bg-gray-100 text-red-500">
-                <i class="fas fa-sign-out-alt"></i> <span class="font-medium">Выйти</span>
-            </button>
+            <button onclick="addNewContact()" class="w-full flex items-center gap-6 px-6 py-4 hover:bg-gray-100"><i class="fas fa-user-plus"></i> Новый контакт</button>
+            <button onclick="toggleDarkMode()" class="w-full flex items-center gap-6 px-6 py-4 hover:bg-gray-100"><i class="fas fa-moon"></i> Тёмная тема</button>
+            <button onclick="logout()" class="w-full flex items-center gap-6 px-6 py-4 hover:bg-gray-100 text-red-500"><i class="fas fa-sign-out-alt"></i> Выйти</button>
         </div>
     </div>
 
-    <header class="bg-[#517da2] text-white p-4 flex justify-between items-center z-50 shadow-md">
-        <div class="flex items-center gap-4">
-            <button id="menu-btn" onclick="toggleMenu()" class="text-xl p-2"><i class="fas fa-bars"></i></button>
-            <button id="back-btn" onclick="closeChat()" class="hidden text-xl p-2"><i class="fas fa-arrow-left"></i></button>
-            <span id="header-title" class="font-bold text-xl uppercase tracking-tighter">WB Chat</span>
+    <header id="main-header" class="bg-[#517da2] text-white p-4 flex justify-between items-center z-[500] shadow-md">
+        <div class="flex items-center gap-2">
+            <button id="menu-btn" onclick="toggleMenu()" class="p-2 text-xl"><i class="fas fa-bars"></i></button>
+            <button id="back-btn" onclick="closeChat()" class="hidden p-2 text-xl"><i class="fas fa-arrow-left"></i></button>
+            <span id="header-title" class="font-bold text-lg truncate max-w-[120px]">WB Chat</span>
         </div>
-        <div id="call-btns" class="hidden flex gap-6 text-xl mr-2">
-            <button onclick="initCall('Аудио')"><i class="fas fa-phone-alt"></i></button>
-            <button onclick="initCall('Видео')"><i class="fas fa-video"></i></button>
+        <div id="call-btns" class="hidden flex gap-4">
+            <button onclick="initCall('Аудио')" class="w-10 h-10 flex items-center justify-center bg-white/10 rounded-full"><i class="fas fa-phone-alt"></i></button>
+            <button onclick="initCall('Видео')" class="w-10 h-10 flex items-center justify-center bg-white/10 rounded-full"><i class="fas fa-video"></i></button>
         </div>
     </header>
 
@@ -77,13 +86,11 @@
         <div id="contacts-container"></div>
     </div>
 
-    <div id="chat-screen" class="hidden fixed inset-0 bg-white z-[100] flex flex-col pt-16">
+    <div id="chat-screen" class="hidden fixed inset-0 bg-white z-[400] flex flex-col pt-16">
         <div id="chat-window" class="flex-1 overflow-y-auto p-4 flex flex-col"></div>
-        <div class="bg-white p-2 border-t flex items-center gap-2">
+        <div class="bg-white dark:bg-gray-900 p-2 border-t flex items-center gap-2 pb-4">
             <input id="msg-input" type="text" onkeydown="if(event.key==='Enter') sendMessage()" class="flex-1 bg-gray-100 p-3 rounded-full outline-none px-5" placeholder="Сообщение">
-            <button onclick="sendMessage()" class="w-12 h-12 bg-[#3390ec] text-white rounded-full flex items-center justify-center shadow-lg">
-                <i class="fas fa-paper-plane"></i>
-            </button>
+            <button onclick="sendMessage()" class="w-12 h-12 bg-[#3390ec] text-white rounded-full flex items-center justify-center"><i class="fas fa-paper-plane"></i></button>
         </div>
     </div>
 
@@ -92,9 +99,9 @@
         let contacts = JSON.parse(localStorage.getItem('wb_contacts')) || [];
         let histories = JSON.parse(localStorage.getItem('wb_histories')) || {};
         let activeId = null;
-        let localStream = null;
-        let audioCtx = null;
-        let ringInterval = null;
+        let isDark = localStorage.getItem('wb_dark') === 'true';
+
+        if(isDark) document.body.classList.add('dark-mode');
 
         if (user) {
             document.getElementById('login-screen').classList.add('hidden');
@@ -104,11 +111,17 @@
         }
 
         function toggleMenu() {
-            const menu = document.getElementById('side-menu');
+            document.getElementById('side-menu').classList.toggle('menu-open');
             const overlay = document.getElementById('menu-overlay');
-            menu.classList.toggle('menu-open');
             overlay.classList.toggle('opacity-0');
             overlay.classList.toggle('pointer-events-none');
+        }
+
+        function toggleDarkMode() {
+            isDark = !isDark;
+            document.body.classList.toggle('dark-mode');
+            localStorage.setItem('wb_dark', isDark);
+            toggleMenu();
         }
 
         function register() {
@@ -125,8 +138,8 @@
             container.innerHTML = "";
             contacts.forEach(c => {
                 const item = document.createElement('div');
-                item.className = "p-4 flex items-center gap-4 border-b active:bg-gray-50";
-                item.innerHTML = `<div class="w-14 h-14 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-xl">${c.name[0].toUpperCase()}</div><div class="font-bold">${c.name}</div>`;
+                item.className = "p-4 flex items-center gap-4 border-b dark:border-gray-700 active:bg-gray-100 dark:active:bg-gray-800";
+                item.innerHTML = `<div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-xl">${c.name[0].toUpperCase()}</div><div class="font-bold">${c.name}</div>`;
                 item.onclick = () => openChat(c);
                 container.appendChild(item);
             });
@@ -176,60 +189,34 @@
         }
 
         function addNewContact() {
-            toggleMenu();
             const name = prompt("Имя контакта:");
             if(name) {
                 const id = 'id_' + Date.now();
                 contacts.push({id, name});
                 localStorage.setItem('wb_contacts', JSON.stringify(contacts));
                 renderContacts();
+                toggleMenu();
             }
         }
 
-        // --- ЗВОНКИ ---
-        async function initCall(type) {
+        function initCall(type) {
             document.getElementById('call-overlay').classList.remove('hidden');
             document.getElementById('call-name').innerText = document.getElementById('header-title').innerText;
-            startRinging();
-            if(type === 'Видео') {
-                try {
-                    localStream = await navigator.mediaDevices.getUserMedia({video:true, audio:true});
-                    document.getElementById('local-video').srcObject = localStream;
-                    document.getElementById('local-video').classList.remove('hidden');
-                } catch(e) { console.log(e); }
-            }
+            if(type === 'Видео') document.getElementById('local-video').classList.remove('hidden');
         }
 
         function endCall() {
-            stopRinging();
             document.getElementById('call-overlay').classList.add('hidden');
-            if(localStream) localStream.getTracks().forEach(t => t.stop());
             document.getElementById('local-video').classList.add('hidden');
         }
 
-        function startRinging() {
-            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            const playTone = () => {
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.frequency.setValueAtTime(425, audioCtx.currentTime);
-                gain.gain.setValueAtTime(0, audioCtx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.1, audioCtx.currentTime + 0.1);
-                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 2.5);
-                osc.connect(gain); gain.connect(audioCtx.destination);
-                osc.start(); osc.stop(audioCtx.currentTime + 3);
-            };
-            playTone();
-            ringInterval = setInterval(playTone, 4000);
-        }
-
-        function stopRinging() { clearInterval(ringInterval); ringInterval = null; }
         function logout() { localStorage.clear(); location.reload(); }
 
         renderContacts();
     </script>
 </body>
 </html>
+
 
 
 
