@@ -2,113 +2,74 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <title>WB Mobile</title>
+    <title>WB Mobile Fix</title>
     <style>
-        :root { --main-blue: #3390ec; }
+        /* Фикс высоты для мобильных браузеров */
+        html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; }
+        body { display: flex; flex-direction: column; }
+        
         .hidden { display: none !important; }
         
-        /* Фон как в мессенджерах */
         #chat-window {
+            flex: 1;
+            overflow-y: auto;
             background-color: #e5ddd5;
             background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
-            background-attachment: fixed;
+            padding: 15px;
         }
 
-        /* Плавные переходы для мобилок */
-        .mobile-panel { transition: transform 0.3s ease; }
-        
-        /* Скрытие скроллбара */
-        ::-webkit-scrollbar { width: 0; }
-
-        /* Видео во весь экран */
-        #remote-video { width: 100%; height: 100%; object-fit: cover; }
-        #local-video {
-            position: absolute; top: 20px; right: 20px; width: 90px; height: 130px;
-            border-radius: 12px; border: 2px solid white; z-index: 1000;
-        }
+        /* Облачка сообщений */
+        .msg { max-width: 85%; padding: 10px 15px; border-radius: 18px; font-size: 15px; margin-bottom: 8px; position: relative; }
+        .msg-mine { background: #effdde; align-self: flex-end; border-bottom-right-radius: 4px; }
+        .msg-their { background: #ffffff; align-self: flex-start; border-bottom-left-radius: 4px; }
     </style>
 </head>
-<body class="bg-white h-screen flex flex-col overflow-hidden select-none">
+<body class="bg-white font-sans">
 
-    <div id="login-screen" class="fixed inset-0 bg-white z-[9000] flex flex-col items-center justify-center p-8">
-        <div class="w-24 h-24 bg-blue-500 rounded-3xl flex items-center justify-center mb-8 shadow-xl">
-            <i class="fas fa-paper-plane text-white text-4xl"></i>
-        </div>
-        <h1 class="text-3xl font-bold mb-2">WB Messenger</h1>
-        <p class="text-gray-400 mb-8 text-center">Введите ваш номер для входа</p>
-        <input type="text" id="reg-name" placeholder="Имя" class="w-full bg-gray-100 p-4 rounded-2xl mb-4 outline-none border-2 border-transparent focus:border-blue-500">
-        <input type="tel" id="reg-phone" placeholder="+7 (___) ___-__-__" class="w-full bg-gray-100 p-4 rounded-2xl mb-8 outline-none border-2 border-transparent focus:border-blue-500">
-        <button onclick="register()" class="w-full bg-[#3390ec] text-white p-4 rounded-2xl font-bold text-lg shadow-lg active:scale-95 transition">Продолжить</button>
-    </div>
-
-    <div id="call-overlay" class="fixed inset-0 bg-gray-900 z-[8000] hidden flex flex-col">
-        <video id="remote-video" autoplay playsinline></video>
-        <video id="local-video" autoplay playsinline muted class="hidden"></video>
-        <div class="absolute inset-0 bg-black/30 flex flex-col items-center justify-between py-20 text-white">
-            <div class="text-center">
-                <h2 id="call-name" class="text-3xl font-bold mb-2">Загрузка...</h2>
-                <p id="call-status" class="animate-pulse">Вызов...</p>
-            </div>
-            <button onclick="endCall()" class="w-20 h-20 bg-red-500 rounded-full flex items-center justify-center text-3xl shadow-2xl">
-                <i class="fas fa-phone-slash rotate-[135deg]"></i>
-            </button>
+    <div id="login-screen" class="fixed inset-0 bg-[#517da2] z-[999] flex items-center justify-center p-6">
+        <div class="bg-white w-full max-w-sm p-8 rounded-3xl shadow-2xl text-center">
+            <h1 class="text-2xl font-bold mb-6">Вход в WB Chat</h1>
+            <input type="text" id="reg-name" placeholder="Ваше имя" class="w-full border p-4 rounded-xl mb-4 outline-none">
+            <input type="tel" id="reg-phone" placeholder="Номер телефона" class="w-full border p-4 rounded-xl mb-6 outline-none">
+            <button onclick="register()" class="w-full bg-[#3390ec] text-white p-4 rounded-xl font-bold">Войти</button>
         </div>
     </div>
 
-    <header class="bg-[#517da2] text-white px-4 py-3 flex justify-between items-center shrink-0 pt-[env(safe-area-inset-top)]">
+    <header id="main-header" class="bg-[#517da2] text-white p-4 flex justify-between items-center shadow-md">
         <div class="flex items-center gap-3">
-            <button id="back-btn" onclick="showList()" class="hidden mr-2"><i class="fas fa-arrow-left"></i></button>
-            <span id="header-title" class="font-bold text-xl uppercase tracking-tight">WB Chat</span>
+            <button id="back-btn" onclick="closeChat()" class="hidden text-xl px-2"><i class="fas fa-arrow-left"></i></button>
+            <span id="header-title" class="font-bold text-lg">WB Messenger</span>
         </div>
-        <div id="call-btns" class="hidden flex gap-5">
-            <button onclick="initCall('Аудио')"><i class="fas fa-phone-alt"></i></button>
-            <button onclick="initCall('Видео')"><i class="fas fa-video"></i></button>
+        <div id="call-btns" class="hidden flex gap-5 text-xl">
+            <button onclick="alert('Звоню...')"><i class="fas fa-phone-alt"></i></button>
         </div>
     </header>
 
-    <main class="flex-1 flex overflow-hidden relative">
-        <div id="side-panel" class="w-full bg-white absolute inset-0 z-20 overflow-y-auto">
-            <div id="contact-list"></div>
-            <button onclick="addNewContact()" class="fixed bottom-24 right-6 w-14 h-14 bg-blue-500 text-white rounded-full shadow-2xl flex items-center justify-center text-xl z-30">
-                <i class="fas fa-plus"></i>
+    <div id="contact-list-screen" class="flex-1 overflow-y-auto bg-white">
+        <div id="contacts-container"></div>
+        <button onclick="addNewContact()" class="fixed bottom-20 right-6 w-14 h-14 bg-blue-500 text-white rounded-full shadow-xl flex items-center justify-center text-2xl">
+            <i class="fas fa-plus"></i>
+        </button>
+    </div>
+
+    <div id="chat-screen" class="hidden flex-1 flex flex-col overflow-hidden bg-gray-100">
+        <div id="chat-window" class="flex flex-col"></div>
+        
+        <div class="bg-white p-3 border-t flex items-center gap-2">
+            <input id="msg-input" type="text" class="flex-1 bg-gray-100 p-3 rounded-full outline-none px-5" placeholder="Сообщение...">
+            <button onclick="sendMessage()" class="w-12 h-12 bg-blue-500 text-white rounded-full flex items-center justify-center shadow-md">
+                <i class="fas fa-paper-plane"></i>
             </button>
         </div>
+    </div>
 
-        <div id="chat-panel" class="w-full bg-white absolute inset-0 z-10 flex flex-col translate-x-full mobile-panel">
-            <div id="chat-window" class="flex-1 p-4 flex flex-col gap-3 overflow-y-auto"></div>
-            
-            <div id="input-area" class="p-2 pb-[env(safe-area-inset-bottom)] bg-gray-50 flex items-center gap-2 border-t">
-                <button onclick="toggleStickers()" class="w-10 h-10 text-gray-400 text-xl"><i class="far fa-smile"></i></button>
-                <input id="msg-input" type="text" onkeydown="if(event.key==='Enter') sendMessage()" class="flex-1 bg-white border p-2 px-4 rounded-full outline-none" placeholder="Сообщение">
-                <button onclick="sendMessage()" class="w-10 h-10 bg-blue-500 text-white rounded-full flex items-center justify-center"><i class="fas fa-paper-plane text-sm"></i></button>
-            </div>
-
-            <div id="sticker-panel" class="hidden h-40 bg-white border-t p-4 flex gap-4 overflow-x-auto">
-                <div onclick="sendSticker('😂')" class="text-5xl">😂</div>
-                <div onclick="sendSticker('🔥')" class="text-5xl">🔥</div>
-                <div onclick="sendSticker('❤️')" class="text-5xl">❤️</div>
-                <div onclick="sendSticker('👍')" class="text-5xl">👍</div>
-            </div>
-        </div>
-    </main>
-
-    <nav id="bottom-nav" class="h-16 border-t bg-gray-50 flex justify-around items-center shrink-0 pb-[env(safe-area-inset-bottom)]">
-        <button onclick="showList()" class="text-blue-500 flex flex-col items-center gap-1">
-            <i class="fas fa-comment"></i>
-            <span class="text-[10px] font-bold">Чаты</span>
-        </button>
-        <button onclick="alert('Скоро!')" class="text-gray-400 flex flex-col items-center gap-1">
-            <i class="fas fa-phone"></i>
-            <span class="text-[10px] font-bold">Звонки</span>
-        </button>
-        <button onclick="logout()" class="text-gray-400 flex flex-col items-center gap-1">
-            <i class="fas fa-cog"></i>
-            <span class="text-[10px] font-bold">Настройки</span>
-        </button>
+    <nav id="bottom-nav" class="bg-gray-50 border-t flex justify-around p-3">
+        <button class="text-blue-500 flex flex-col items-center"><i class="fas fa-comment"></i><span class="text-[10px]">Чаты</span></button>
+        <button onclick="logout()" class="text-gray-400 flex flex-col items-center"><i class="fas fa-sign-out-alt"></i><span class="text-[10px]">Выход</span></button>
     </nav>
 
     <script>
@@ -116,70 +77,69 @@
         let contacts = JSON.parse(localStorage.getItem('wb_contacts')) || [];
         let histories = JSON.parse(localStorage.getItem('wb_histories')) || {};
         let activeId = null;
-        let audioCtx = null;
-        let ringInterval = null;
 
         if (user) document.getElementById('login-screen').classList.add('hidden');
 
         function register() {
-            const name = document.getElementById('reg-name').value.trim();
-            const phone = document.getElementById('reg-phone').value.trim();
-            if (name && phone) {
+            const name = document.getElementById('reg-name').value;
+            const phone = document.getElementById('reg-phone').value;
+            if(name && phone) {
                 localStorage.setItem('wb_profile', JSON.stringify({name, phone}));
                 location.reload();
             }
         }
 
         function renderContacts() {
-            const list = document.getElementById('contact-list');
-            list.innerHTML = "";
+            const container = document.getElementById('contacts-container');
+            container.innerHTML = "";
             contacts.forEach(c => {
-                const div = document.createElement('div');
-                div.className = "p-4 flex items-center gap-4 border-b active:bg-gray-100 transition";
-                div.innerHTML = `<div class="w-14 h-14 rounded-full bg-blue-400 text-white flex items-center justify-center font-bold text-xl">${c.name[0]}</div>
-                                 <div class="flex-1">
-                                    <div class="font-bold text-lg">${c.name}</div>
-                                    <div class="text-sm text-gray-400">Нажмите, чтобы открыть чат</div>
-                                 </div>`;
-                div.onclick = () => openChat(c);
-                list.appendChild(div);
+                const item = document.createElement('div');
+                item.className = "p-4 flex items-center gap-4 border-b active:bg-gray-100 cursor-pointer";
+                item.innerHTML = `
+                    <div class="w-12 h-12 bg-blue-400 rounded-full flex items-center justify-center text-white font-bold">${c.name[0]}</div>
+                    <div class="font-bold">${c.name}</div>
+                `;
+                item.onclick = () => openChat(c);
+                container.appendChild(item);
             });
         }
 
         function openChat(c) {
             activeId = c.id;
-            document.getElementById('chat-panel').style.transform = "translateX(0)";
+            document.getElementById('contact-list-screen').classList.add('hidden');
+            document.getElementById('bottom-nav').classList.add('hidden');
+            document.getElementById('chat-screen').classList.remove('hidden');
             document.getElementById('back-btn').classList.remove('hidden');
             document.getElementById('call-btns').classList.remove('hidden');
             document.getElementById('header-title').innerText = c.name;
-            document.getElementById('bottom-nav').classList.add('hidden');
             loadHistory();
         }
 
-        function showList() {
-            document.getElementById('chat-panel').style.transform = "translateX(100%)";
+        function closeChat() {
+            document.getElementById('contact-list-screen').classList.remove('hidden');
+            document.getElementById('bottom-nav').classList.remove('hidden');
+            document.getElementById('chat-screen').classList.add('hidden');
             document.getElementById('back-btn').classList.add('hidden');
             document.getElementById('call-btns').classList.add('hidden');
-            document.getElementById('header-title').innerText = "WB Chat";
-            document.getElementById('bottom-nav').classList.remove('hidden');
+            document.getElementById('header-title').innerText = "WB Messenger";
         }
 
         function sendMessage() {
-            const inp = document.getElementById('msg-input');
-            if(!inp.value.trim()) return;
-            const msg = { text: inp.value, isMine: true };
+            const input = document.getElementById('msg-input');
+            if(!input.value.trim()) return;
+            const msg = { text: input.value, isMine: true };
             if(!histories[activeId]) histories[activeId] = [];
             histories[activeId].push(msg);
             localStorage.setItem('wb_histories', JSON.stringify(histories));
             appendMsg(msg);
-            inp.value = "";
+            input.value = "";
         }
 
         function appendMsg(m) {
             const win = document.getElementById('chat-window');
             const div = document.createElement('div');
-            div.className = m.isMine ? "self-end" : "self-start";
-            div.innerHTML = `<div class="${m.isMine ? 'bg-[#effdde]' : 'bg-white'} p-3 px-4 rounded-2xl shadow-sm max-w-[80vw]">${m.text}</div>`;
+            div.className = `msg ${m.isMine ? 'msg-mine' : 'msg-their shadow-sm'}`;
+            div.innerText = m.text;
             win.appendChild(div);
             win.scrollTop = win.scrollHeight;
         }
@@ -190,7 +150,7 @@
         }
 
         function addNewContact() {
-            const name = prompt("Имя:");
+            const name = prompt("Имя контакта:");
             if(name) {
                 const id = 'id_' + Date.now();
                 contacts.push({id, name});
@@ -200,18 +160,9 @@
         }
 
         function logout() { localStorage.clear(); location.reload(); }
-        function toggleStickers() { document.getElementById('sticker-panel').classList.toggle('hidden'); }
-        function sendSticker(s) { sendMessage({text: s, isMine: true}); toggleStickers(); }
-
-        // Звуки и Звонки (как в прошлых версиях)
-        function initCall(type) {
-            document.getElementById('call-overlay').classList.remove('hidden');
-            document.getElementById('call-name').innerText = document.getElementById('header-title').innerText;
-            // Логика звонка...
-        }
-        function endCall() { document.getElementById('call-overlay').classList.add('hidden'); }
 
         renderContacts();
     </script>
 </body>
 </html>
+
