@@ -6,91 +6,85 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <title>WB Messenger Pro</title>
+    <title>WB Messenger Ultra</title>
     <style>
-        html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; transition: background 0.3s; }
+        html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; }
         .hidden { display: none !important; }
         
         /* Боковое меню */
-        #side-menu { transition: transform 0.3s ease-in-out; z-index: 1000; }
+        #side-menu { transition: transform 0.3s ease; z-index: 2000; width: 280px; }
         .menu-open { transform: translateX(0) !important; }
-        .menu-overlay { background: rgba(0,0,0,0.5); transition: opacity 0.3s; z-index: 900; }
+        .menu-overlay { background: rgba(0,0,0,0.6); transition: opacity 0.3s; z-index: 1500; }
 
-        /* Чат и сообщения */
-        #chat-window { background-color: #e5ddd5; background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); }
-        .msg { max-width: 80%; padding: 10px 14px; border-radius: 18px; margin-bottom: 8px; font-size: 15px; }
-        .msg-mine { background: #effdde; align-self: flex-end; border-bottom-right-radius: 4px; }
-        .msg-their { background: #ffffff; align-self: flex-start; border-bottom-left-radius: 4px; }
+        /* Чат */
+        #chat-window { 
+            background-color: #e5ddd5; 
+            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
+            background-size: contain;
+        }
 
         /* Тёмная тема */
-        body.dark-mode { background-color: #1c242c; color: white; }
-        .dark-mode #side-menu { background-color: #1c242c; color: white; }
-        .dark-mode #contact-list-screen { background-color: #1c242c; }
-        .dark-mode .msg-their { background: #242f3d; color: white; border: none; }
-        .dark-mode .msg-mine { background: #4082bc; color: white; }
-        .dark-mode #chat-window { background-color: #0e1621; background-image: opacity(0.1); }
-        .dark-mode header { background-color: #242f3d; }
-        .dark-mode input { background-color: #1c242c; color: white; border-color: #3d4b59; }
+        .dark-mode { background-color: #0e1621 !important; color: white !important; }
+        .dark-mode #side-menu { background-color: #17212b; color: white; }
+        .dark-mode header { background-color: #242f3d !important; }
+        .dark-mode #contact-list-screen { background-color: #0e1621; }
+        .dark-mode .contact-item { border-bottom-color: #101921; }
+        .dark-mode .msg-their { background: #182533 !important; color: white; }
+        .dark-mode .msg-mine { background: #2b5278 !important; color: white; }
+        .dark-mode #chat-window { background-color: #0e1621; filter: grayscale(0.5) brightness(0.6); }
+        .dark-mode #input-area { background-color: #17212b; border-top-color: #101921; }
+        .dark-mode input { background-color: #242f3d; color: white; }
     </style>
 </head>
-<body class="bg-white flex flex-col">
+<body class="flex flex-col bg-white transition-colors duration-300">
 
-    <div id="login-screen" class="fixed inset-0 bg-[#517da2] z-[5000] flex items-center justify-center p-6">
-        <div class="bg-white dark:bg-gray-800 w-full max-w-sm p-8 rounded-3xl shadow-2xl">
-            <h1 class="text-2xl font-bold text-center mb-6">Вход</h1>
-            <input type="text" id="reg-name" placeholder="Имя" class="w-full border p-4 rounded-xl mb-4 outline-none">
-            <input type="tel" id="reg-phone" placeholder="Номер телефона" class="w-full border p-4 rounded-xl mb-6 outline-none">
-            <button onclick="register()" class="w-full bg-[#3390ec] text-white p-4 rounded-xl font-bold">ВОЙТИ</button>
+    <div id="call-overlay" class="fixed inset-0 bg-slate-900 z-[5000] hidden flex flex-col items-center justify-around text-white p-10">
+        <div class="text-center">
+            <div class="w-32 h-32 bg-blue-500 rounded-full mx-auto mb-6 flex items-center justify-center text-5xl font-bold shadow-2xl border-4 border-white/20" id="call-avatar">?</div>
+            <h2 id="call-name" class="text-4xl font-bold mb-2">Никита</h2>
+            <p id="call-status" class="text-blue-400 animate-pulse text-xl">Вызов...</p>
         </div>
-    </div>
-
-    <div id="call-overlay" class="fixed inset-0 bg-black z-[4000] hidden flex flex-col items-center justify-center text-white">
-        <video id="remote-video" autoplay playsinline class="w-full h-full object-cover"></video>
-        <video id="local-video" autoplay playsinline muted class="hidden absolute top-10 right-5 w-24 h-32 border-2 border-white rounded-lg"></video>
-        <div class="absolute top-20 text-center">
-            <h2 id="call-name" class="text-3xl font-bold">Контакт</h2>
-            <p id="call-status" class="animate-pulse text-blue-400">Вызов...</p>
-        </div>
-        <button onclick="endCall()" class="absolute bottom-12 w-20 h-20 bg-red-500 rounded-full flex items-center justify-center text-3xl">
+        <button onclick="endCall()" class="w-24 h-24 bg-red-500 rounded-full flex items-center justify-center text-4xl shadow-2xl active:scale-90 transition">
             <i class="fas fa-phone-slash rotate-[135deg]"></i>
         </button>
     </div>
 
     <div id="menu-overlay" class="fixed inset-0 menu-overlay opacity-0 pointer-events-none" onclick="toggleMenu()"></div>
-    <div id="side-menu" class="fixed top-0 left-0 h-full w-72 bg-white -translate-x-full shadow-2xl flex flex-col">
-        <div class="bg-[#517da2] p-6 text-white">
-            <div id="user-avatar" class="w-16 h-16 bg-blue-400 rounded-full mb-4 flex items-center justify-center text-2xl font-bold border-2 border-white/30 text-white">?</div>
-            <div id="user-name-display" class="font-bold text-lg">Имя</div>
-            <div id="user-phone-display" class="text-blue-100 text-sm italic">Номер</div>
+    <div id="side-menu" class="fixed top-0 left-0 h-full bg-white -translate-x-full shadow-2xl flex flex-col">
+        <div class="bg-[#517da2] p-8 text-white">
+            <div id="u-avatar" class="w-20 h-20 bg-blue-400 rounded-full mb-4 flex items-center justify-center text-3xl font-bold border-2 border-white/20">?</div>
+            <div id="u-name" class="font-bold text-xl">Загрузка...</div>
+            <div id="u-phone" class="text-blue-100 opacity-70">Номер</div>
         </div>
-        <div class="flex-1 py-2">
-            <button onclick="addNewContact()" class="w-full flex items-center gap-6 px-6 py-4 hover:bg-gray-100"><i class="fas fa-user-plus"></i> Новый контакт</button>
-            <button onclick="toggleDarkMode()" class="w-full flex items-center gap-6 px-6 py-4 hover:bg-gray-100"><i class="fas fa-moon"></i> Тёмная тема</button>
-            <button onclick="logout()" class="w-full flex items-center gap-6 px-6 py-4 hover:bg-gray-100 text-red-500"><i class="fas fa-sign-out-alt"></i> Выйти</button>
+        <div class="flex-1 py-4">
+            <button onclick="addNewContact()" class="w-full flex items-center gap-6 px-8 py-4 text-lg active:bg-gray-100"><i class="fas fa-user-plus text-blue-500"></i> Новый контакт</button>
+            <button onclick="toggleDark()" class="w-full flex items-center gap-6 px-8 py-4 text-lg active:bg-gray-100"><i class="fas fa-moon text-purple-500"></i> Тёмная тема</button>
+            <div class="border-t my-4"></div>
+            <button onclick="logout()" class="w-full flex items-center gap-6 px-8 py-4 text-lg text-red-500 active:bg-red-50"><i class="fas fa-sign-out-alt"></i> Выход</button>
         </div>
     </div>
 
-    <header id="main-header" class="bg-[#517da2] text-white p-4 flex justify-between items-center z-[500] shadow-md">
-        <div class="flex items-center gap-2">
-            <button id="menu-btn" onclick="toggleMenu()" class="p-2 text-xl"><i class="fas fa-bars"></i></button>
-            <button id="back-btn" onclick="closeChat()" class="hidden p-2 text-xl"><i class="fas fa-arrow-left"></i></button>
-            <span id="header-title" class="font-bold text-lg truncate max-w-[120px]">WB Chat</span>
+    <header class="bg-[#517da2] h-16 flex items-center justify-between px-4 text-white shadow-lg shrink-0 z-[1000]">
+        <div class="flex items-center gap-3">
+            <button id="m-btn" onclick="toggleMenu()" class="w-10 h-10 flex items-center justify-center text-2xl"><i class="fas fa-bars"></i></button>
+            <button id="b-btn" onclick="closeChat()" class="hidden w-10 h-10 flex items-center justify-center text-2xl"><i class="fas fa-arrow-left"></i></button>
+            <h1 id="h-title" class="font-bold text-xl tracking-tight">WB Chat</h1>
         </div>
-        <div id="call-btns" class="hidden flex gap-4">
-            <button onclick="initCall('Аудио')" class="w-10 h-10 flex items-center justify-center bg-white/10 rounded-full"><i class="fas fa-phone-alt"></i></button>
-            <button onclick="initCall('Видео')" class="w-10 h-10 flex items-center justify-center bg-white/10 rounded-full"><i class="fas fa-video"></i></button>
+        <div id="call-box" class="hidden flex gap-4">
+            <button onclick="initCall('A')" class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-lg active:bg-white/40"><i class="fas fa-phone-alt"></i></button>
+            <button onclick="initCall('V')" class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-lg active:bg-white/40"><i class="fas fa-video"></i></button>
         </div>
     </header>
 
-    <div id="contact-list-screen" class="flex-1 overflow-y-auto bg-white">
-        <div id="contacts-container"></div>
+    <div id="contact-list-screen" class="flex-1 overflow-y-auto bg-gray-50">
+        <div id="c-list"></div>
     </div>
 
-    <div id="chat-screen" class="hidden fixed inset-0 bg-white z-[400] flex flex-col pt-16">
-        <div id="chat-window" class="flex-1 overflow-y-auto p-4 flex flex-col"></div>
-        <div class="bg-white dark:bg-gray-900 p-2 border-t flex items-center gap-2 pb-4">
-            <input id="msg-input" type="text" onkeydown="if(event.key==='Enter') sendMessage()" class="flex-1 bg-gray-100 p-3 rounded-full outline-none px-5" placeholder="Сообщение">
-            <button onclick="sendMessage()" class="w-12 h-12 bg-[#3390ec] text-white rounded-full flex items-center justify-center"><i class="fas fa-paper-plane"></i></button>
+    <div id="chat-screen" class="hidden fixed inset-0 flex flex-col pt-16 z-[500] bg-white">
+        <div id="chat-window" class="flex-1 overflow-y-auto p-4 flex flex-col gap-2"></div>
+        <div id="input-area" class="h-16 bg-white border-t flex items-center px-3 gap-2 shrink-0">
+            <input id="m-input" type="text" onkeydown="if(event.key==='Enter') sendMsg()" class="flex-1 bg-gray-100 h-10 rounded-full px-5 outline-none" placeholder="Cообщение...">
+            <button onclick="sendMsg()" class="w-10 h-10 bg-[#3390ec] text-white rounded-full flex items-center justify-center text-sm shadow-md"><i class="fas fa-paper-plane"></i></button>
         </div>
     </div>
 
@@ -103,119 +97,115 @@
 
         if(isDark) document.body.classList.add('dark-mode');
 
-        if (user) {
-            document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('user-name-display').innerText = user.name;
-            document.getElementById('user-phone-display').innerText = user.phone;
-            document.getElementById('user-avatar').innerText = user.name[0].toUpperCase();
+        if (!user) {
+            // Если нет профиля — принудительная регистрация
+            const n = prompt("Ваше имя:");
+            const p = prompt("Ваш телефон:");
+            if(n && p) {
+                user = {name: n, phone: p};
+                localStorage.setItem('wb_profile', JSON.stringify(user));
+                location.reload();
+            }
+        } else {
+            document.getElementById('u-name').innerText = user.name;
+            document.getElementById('u-phone').innerText = user.phone;
+            document.getElementById('u-avatar').innerText = user.name[0];
         }
 
         function toggleMenu() {
             document.getElementById('side-menu').classList.toggle('menu-open');
-            const overlay = document.getElementById('menu-overlay');
-            overlay.classList.toggle('opacity-0');
-            overlay.classList.toggle('pointer-events-none');
+            document.getElementById('menu-overlay').classList.toggle('opacity-0');
+            document.getElementById('menu-overlay').classList.toggle('pointer-events-none');
         }
 
-        function toggleDarkMode() {
+        function toggleDark() {
             isDark = !isDark;
             document.body.classList.toggle('dark-mode');
             localStorage.setItem('wb_dark', isDark);
             toggleMenu();
         }
 
-        function register() {
-            const name = document.getElementById('reg-name').value;
-            const phone = document.getElementById('reg-phone').value;
-            if(name && phone) {
-                localStorage.setItem('wb_profile', JSON.stringify({name, phone}));
-                location.reload();
-            }
-        }
-
-        function renderContacts() {
-            const container = document.getElementById('contacts-container');
-            container.innerHTML = "";
+        function render() {
+            const list = document.getElementById('c-list');
+            list.innerHTML = "";
             contacts.forEach(c => {
-                const item = document.createElement('div');
-                item.className = "p-4 flex items-center gap-4 border-b dark:border-gray-700 active:bg-gray-100 dark:active:bg-gray-800";
-                item.innerHTML = `<div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-xl">${c.name[0].toUpperCase()}</div><div class="font-bold">${c.name}</div>`;
-                item.onclick = () => openChat(c);
-                container.appendChild(item);
+                const div = document.createElement('div');
+                div.className = "contact-item p-4 flex items-center gap-4 bg-white dark:bg-[#17212b] border-b dark:border-[#0e1621] active:opacity-70";
+                div.innerHTML = `<div class="w-14 h-14 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-xl">${c.name[0]}</div>
+                                 <div class="font-bold text-lg">${c.name}</div>`;
+                div.onclick = () => openChat(c);
+                list.appendChild(div);
             });
         }
 
         function openChat(c) {
             activeId = c.id;
             document.getElementById('chat-screen').classList.remove('hidden');
-            document.getElementById('menu-btn').classList.add('hidden');
-            document.getElementById('back-btn').classList.remove('hidden');
-            document.getElementById('call-btns').classList.remove('hidden');
-            document.getElementById('header-title').innerText = c.name;
-            loadHistory();
+            document.getElementById('m-btn').classList.add('hidden');
+            document.getElementById('b-btn').classList.remove('hidden');
+            document.getElementById('call-box').classList.remove('hidden');
+            document.getElementById('h-title').innerText = c.name;
+            loadHist();
         }
 
         function closeChat() {
             document.getElementById('chat-screen').classList.add('hidden');
-            document.getElementById('menu-btn').classList.remove('hidden');
-            document.getElementById('back-btn').classList.add('hidden');
-            document.getElementById('call-btns').classList.add('hidden');
-            document.getElementById('header-title').innerText = "WB Chat";
+            document.getElementById('m-btn').classList.remove('hidden');
+            document.getElementById('b-btn').classList.add('hidden');
+            document.getElementById('call-box').classList.add('hidden');
+            document.getElementById('h-title').innerText = "WB Chat";
         }
 
-        function sendMessage() {
-            const input = document.getElementById('msg-input');
-            if(!input.value.trim()) return;
-            const msg = { text: input.value, isMine: true };
+        function sendMsg() {
+            const inp = document.getElementById('m-input');
+            if(!inp.value.trim()) return;
+            const m = {text: inp.value, mine: true};
             if(!histories[activeId]) histories[activeId] = [];
-            histories[activeId].push(msg);
+            histories[activeId].push(m);
             localStorage.setItem('wb_histories', JSON.stringify(histories));
-            appendMsg(msg);
-            input.value = "";
+            append(m);
+            inp.value = "";
         }
 
-        function appendMsg(m) {
+        function append(m) {
             const win = document.getElementById('chat-window');
-            const div = document.createElement('div');
-            div.className = `msg ${m.isMine ? 'msg-mine' : 'msg-their shadow-sm'}`;
-            div.innerText = m.text;
-            win.appendChild(div);
+            const d = document.createElement('div');
+            d.className = `msg ${m.mine ? 'msg-mine self-end bg-[#effdde]' : 'msg-their self-start bg-white'} shadow-sm rounded-2xl px-4 py-2`;
+            d.innerText = m.text;
+            win.appendChild(d);
             win.scrollTop = win.scrollHeight;
         }
 
-        function loadHistory() {
+        function loadHist() {
             document.getElementById('chat-window').innerHTML = "";
-            (histories[activeId] || []).forEach(appendMsg);
+            (histories[activeId] || []).forEach(append);
         }
 
         function addNewContact() {
-            const name = prompt("Имя контакта:");
-            if(name) {
-                const id = 'id_' + Date.now();
-                contacts.push({id, name});
+            const n = prompt("Имя:");
+            if(n) {
+                const id = 'id_'+Date.now();
+                contacts.push({id, name: n});
                 localStorage.setItem('wb_contacts', JSON.stringify(contacts));
-                renderContacts();
+                render();
                 toggleMenu();
             }
         }
 
         function initCall(type) {
             document.getElementById('call-overlay').classList.remove('hidden');
-            document.getElementById('call-name').innerText = document.getElementById('header-title').innerText;
-            if(type === 'Видео') document.getElementById('local-video').classList.remove('hidden');
+            document.getElementById('call-name').innerText = document.getElementById('h-title').innerText;
+            document.getElementById('call-avatar').innerText = document.getElementById('h-title').innerText[0];
         }
 
-        function endCall() {
-            document.getElementById('call-overlay').classList.add('hidden');
-            document.getElementById('local-video').classList.add('hidden');
-        }
-
+        function endCall() { document.getElementById('call-overlay').classList.add('hidden'); }
         function logout() { localStorage.clear(); location.reload(); }
 
-        renderContacts();
+        render();
     </script>
 </body>
 </html>
+
 
 
 
