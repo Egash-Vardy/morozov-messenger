@@ -20,8 +20,8 @@
         }
 
         .msg { max-width: 80%; padding: 8px 14px; border-radius: 16px; margin-bottom: 5px; font-size: 15px; }
-        .msg-mine { background: #effdde; align-self: flex-end; border-bottom-right-radius: 4px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
-        .msg-their { background: #ffffff; align-self: flex-start; border-bottom-left-radius: 4px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
+        .msg-mine { background: #effdde; align-self: flex-end; border-bottom-right-radius: 4px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); color: #000; }
+        .msg-their { background: #ffffff; align-self: flex-start; border-bottom-left-radius: 4px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); color: #000; }
 
         .dark-mode { background-color: #0e1621; color: white; }
         .dark-mode #side-menu { background-color: #17212b; }
@@ -31,6 +31,7 @@
         .dark-mode .msg-their { background: #182533; color: white; }
         .dark-mode .msg-mine { background: #2b5278; color: white; }
         .dark-mode #input-area { background-color: #17212b; border-top-color: #0e1621; }
+        .dark-mode input { background-color: #242f3d; color: white; }
     </style>
 </head>
 <body class="flex flex-col bg-white">
@@ -53,21 +54,22 @@
             <div id="u-name" class="font-bold text-xl">Пользователь</div>
         </div>
         <div class="flex-1 py-4">
-            <button onclick="addNewContact()" class="w-full flex items-center gap-6 px-8 py-4 text-lg active:bg-gray-100"><i class="fas fa-user-plus text-blue-500"></i> Новый контакт</button>
-            <button onclick="toggleDark()" class="w-full flex items-center gap-6 px-8 py-4 text-lg active:bg-gray-100"><i class="fas fa-moon text-purple-500"></i> Тёмная тема</button>
+            <button onclick="addNewContact()" class="w-full flex items-center gap-6 px-8 py-4 text-lg active:bg-gray-100 dark:hover:bg-gray-700 text-black dark:text-white"><i class="fas fa-user-plus text-blue-500"></i> Новый контакт</button>
+            <button onclick="toggleDark()" class="w-full flex items-center gap-6 px-8 py-4 text-lg active:bg-gray-100 dark:hover:bg-gray-700 text-black dark:text-white"><i class="fas fa-moon text-purple-500"></i> Тёмная тема</button>
             <button onclick="logout()" class="w-full flex items-center gap-6 px-8 py-4 text-lg text-red-500 active:bg-red-50 mt-10"><i class="fas fa-sign-out-alt"></i> Выход</button>
         </div>
     </div>
 
-    <header class="bg-[#517da2] h-16 flex items-center justify-between px-4 text-white shadow-lg shrink-0 z-[1000]">
+    <header class="bg-[#517da2] h-16 flex items-center justify-between px-4 text-white shadow-lg shrink-0 z-[1000] pt-[env(safe-area-inset-top)]">
         <div class="flex items-center gap-3">
-            <button id="m-btn" onclick="toggleMenu()" class="w-10 h-10 flex items-center justify-center text-xl"><i class="fas fa-bars"></i></button>
-            <button id="b-btn" onclick="closeChat()" class="hidden w-10 h-10 flex items-center justify-center text-xl"><i class="fas fa-arrow-left"></i></button>
+            <button id="m-btn" onclick="toggleMenu()" class="w-10 h-10 flex items-center justify-center text-xl active:scale-90 transition"><i class="fas fa-bars"></i></button>
+            <button id="b-btn" onclick="closeChat()" class="hidden w-10 h-10 flex items-center justify-center text-xl active:scale-90 transition"><i class="fas fa-arrow-left"></i></button>
+            
             <h1 id="h-title" class="font-bold text-lg">WB Chat</h1>
         </div>
         <div id="call-box" class="hidden flex gap-3">
-            <button onclick="initCall()" class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center active:bg-white/40"><i class="fas fa-phone-alt"></i></button>
-            <button onclick="initCall()" class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center active:bg-white/40"><i class="fas fa-video"></i></button>
+            <button onclick="initCall()" class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center active:bg-white/40"><i class="fas fa-phone-alt text-sm"></i></button>
+            <button onclick="initCall()" class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center active:bg-white/40"><i class="fas fa-video text-sm"></i></button>
         </div>
     </header>
 
@@ -106,7 +108,6 @@
             document.getElementById('u-avatar').innerText = user.name[0];
         }
 
-        // РАЗБЛОКИРОВКА ЗВУКА
         function unlockAudio() {
             if (!audioCtx) {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -138,7 +139,7 @@
                 div.innerHTML = `<div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-xl uppercase">${c.name[0]}</div>
                                  <div class="font-bold text-lg text-black dark:text-white">${c.name}</div>`;
                 div.onclick = () => {
-                    unlockAudio(); // Магия: разблокируем звук при клике на контакт
+                    unlockAudio();
                     openChat(c);
                 };
                 list.appendChild(div);
@@ -148,8 +149,11 @@
         function openChat(c) {
             activeId = c.id;
             document.getElementById('chat-screen').classList.remove('hidden');
-            document.getElementById('m-btn').classList.add('hidden');
-            document.getElementById('b-btn').classList.remove('hidden');
+            
+            // ПЕРЕКЛЮЧАЕМ КНОПКИ В ШАПКЕ
+            document.getElementById('m-btn').classList.add('hidden'); // Скрыть бургер
+            document.getElementById('b-btn').classList.remove('hidden'); // Показать стрелку
+            
             document.getElementById('call-box').classList.remove('hidden');
             document.getElementById('h-title').innerText = c.name;
             loadHist();
@@ -157,8 +161,11 @@
 
         function closeChat() {
             document.getElementById('chat-screen').classList.add('hidden');
-            document.getElementById('m-btn').classList.remove('hidden');
-            document.getElementById('b-btn').classList.add('hidden');
+            
+            // ВОЗВРАЩАЕМ БУРГЕР
+            document.getElementById('m-btn').classList.remove('hidden'); // Показать бургер
+            document.getElementById('b-btn').classList.add('hidden'); // Скрыть стрелку
+            
             document.getElementById('call-box').classList.add('hidden');
             document.getElementById('h-title').innerText = "WB Chat";
         }
@@ -232,5 +239,6 @@
     </script>
 </body>
 </html>
+
 
 
