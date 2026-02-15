@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>WB Messenger: Auth Edition</title>
+    <style>
+        .hidden { display: none !important; }
+        #chat-window {
+            background-color: #e5ddd5;
+            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
+            overflow-y: auto;
+        }
+        .active-chat { background-color: #3390ec !important; color: white !important; }
+        #remote-video { width: 100%; height: 100%; object-fit: cover; background: #1a202c; }
+        #local-video {
+            position: absolute; bottom: 100px; right: 20px; width: 120px; height: 160px;
+            object-fit: cover; border: 2px solid white; border-radius: 12px; z-index: 1000;
+        }
+        .auth-input { @apply w-full border p-4 rounded-xl mb-4 outline-none focus:border-blue-500 transition-all; }
+    </style>
+</head>
+<body class="bg-gray-100 h-screen flex flex-col overflow-hidden font-sans">
+
+    <div id="login-screen" class="fixed inset-0 bg-[#517da2] z-[5000] flex items-center justify-center p-4">
+        <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm text-center">
+            <div class="w-20 h-20 bg-blue-100 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fas fa-user-plus text-3xl"></i>
+            </div>
+            <h1 class="text-2xl font-bold mb-2">Регистрация</h1>
+            <p class="text-gray-500 text-sm mb-8">Введите данные для создания аккаунта</p>
+
+            <input type="text" id="reg-name" placeholder="Ваше имя" class="w-full border p-3 rounded-lg mb-3 outline-none focus:ring-2 ring-blue-300">
+            <input type="tel" id="reg-phone" placeholder="+7 (___) ___-__-__" class="w-full border p-3 rounded-lg mb-6 outline-none focus:ring-2 ring-blue-300">
+
+            <button onclick="register()" class="w-full bg-[#3390ec] text-white p-4 rounded-xl font-bold shadow-lg hover:bg-blue-600 active:scale-95 transition">
+                Зарегистрироваться
+            </button>
+        </div>
+    </div>
+
+    <div id="call-overlay" class="fixed inset-0 bg-black z-[4000] hidden flex flex-col items-center justify-center text-white">
+        <video id="remote-video" autoplay playsinline></video>
+        <video id="local-video" autoplay playsinline muted class="hidden"></video>
+        <div class="absolute top-10 text-center">
+            <h2 id="call-name" class="text-3xl font-bold mb-2">Контакт</h2>
+            <p id="call-status" class="text-blue-400 animate-pulse italic">Вызов...</p>
+        </div>
+        <button onclick="endCall()" class="absolute bottom-10 w-20 h-20 bg-red-500 rounded-full flex items-center justify-center text-3xl shadow-xl">
+            <i class="fas fa-phone-slash rotate-[135deg]"></i>
+        </button>
+    </div>
+
+    <div id="settings-modal" class="fixed inset-0 bg-black/50 z-[3000] hidden flex items-center justify-center">
+        <div class="bg-white w-80 rounded-2xl shadow-2xl p-6">
+            <h2 class="text-xl font-bold mb-2 border-b pb-2">Мой профиль</h2>
+            <p id="profile-info" class="text-sm text-gray-600 mb-6 font-mono"></p>
+            <button onclick="importContacts()" class="w-full text-left py-3 text-blue-600 border-b"><i class="fas fa-address-book mr-3"></i> Импорт контактов</button>
+            <button onclick="logout()" class="w-full text-left py-3 text-red-500"><i class="fas fa-sign-out-alt mr-3"></i> Выйти из аккаунта</button>
+            <button onclick="toggleSettings()" class="mt-4 w-full bg-gray-100 py-2 rounded-lg font-bold">Закрыть</button>
+        </div>
+    </div>
+
+    <div class="flex flex-1 h-full overflow-hidden">
+        <div class="w-1/3 max-w-[380px] bg-white border-r flex flex-col shadow-lg z-10">
+            <div class="p-4 bg-[#517da2] text-white flex justify-between items-center">
+                <button onclick="toggleSettings()"><i class="fas fa-user-circle text-xl"></i></button>
+                <span class="font-bold tracking-wider">MESSENGER</span>
+                <button onclick="addNewContact()"><i class="fas fa-plus"></i></button>
+            </div>
+            <div id="contact-list" class="flex-1 overflow-y-auto"></div>
+        </div>
+
+        <div class="flex-1 flex flex-col bg-white">
+            <div id="chat-header" class="hidden p-4 border-b flex justify-between items-center bg-white shadow-sm z-10">
+                <div class="flex items-center gap-3">
+                    <div id="active-av" class="w-10 h-10 rounded-full bg-blue-500 text-white flex items-center justify-center font-bold"></div>
+                    <div id="chat-title" class="font-bold"></div>
+                </div>
+                <div class="flex gap-6 text-blue-500 text-xl">
+                    <button onclick="initCall('Аудио')"><i class="fas fa-phone-alt"></i></button>
+                    <button onclick="initCall('Видео')"><i class="fas fa-video"></i></button>
+                </div>
+            </div>
+
+            <div id="chat-window" class="flex-1 p-4 flex flex-col gap-3">
+                <div id="empty-msg" class="m-auto text-gray-400">Выберите контакт для начала</div>
+            </div>
+
+            <div id="sticker-panel" class="hidden p-4 bg-gray-50 border-t flex gap-6 overflow-x-auto">
+                <div onclick="sendSticker('😂')" class="text-5xl cursor-pointer">😂</div>
+                <div onclick="sendSticker('🔥')" class="text-5xl cursor-pointer">🔥</div>
+                <div onclick="sendSticker('❤️')" class="text-5xl cursor-pointer">❤️</div>
+                <div onclick="sendSticker('👍')" class="text-5xl cursor-pointer">👍</div>
+            </div>
+
+            <div id="input-area" class="hidden p-3 border-t bg-white flex items-center gap-3">
+                <button onclick="toggleStickers()" class="text-gray-400 text-2xl"><i class="far fa-smile"></i></button>
+                <input id="msg-input" type="text" onkeydown="if(event.key==='Enter') sendMessage()" class="flex-1 bg-gray-100 p-2.5 rounded-xl outline-none" placeholder="Напишите сообщение...">
+                <button onclick="sendMessage()" class="text-blue-500 text-2xl"><i class="fas fa-paper-plane"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let user = JSON.parse(localStorage.getItem('wb_profile')) || null;
+        let contacts = JSON.parse(localStorage.getItem('wb_contacts')) || [];
+        let histories = JSON.parse(localStorage.getItem('wb_histories')) || {};
+        let activeId = null;
+        let localStream = null;
+        let audioCtx = null;
+        let ringInterval = null;
+
+        // --- АВТОРИЗАЦИЯ ---
+        if (user) {
+            document.getElementById('login-screen').classList.add('hidden');
+        }
+
+        function register() {
+            const name = document.getElementById('reg-name').value.trim();
+            const phone = document.getElementById('reg-phone').value.trim();
+
+            if (name.length < 2 || phone.length < 5) {
+                alert("Пожалуйста, введите корректное имя и номер!");
+                return;
+            }
+
+            user = { name, phone };
+            localStorage.setItem('wb_profile', JSON.stringify(user));
+            location.reload();
+        }
+
+        function logout() {
+            localStorage.removeItem('wb_profile');
+            location.reload();
+        }
+
+        // --- ЗВУК ГУДКОВ ---
+        function startRinging() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const playTone = () => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.frequency.setValueAtTime(425, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.1, audioCtx.currentTime + 0.1);
+                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 2.5);
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.start(); osc.stop(audioCtx.currentTime + 3);
+            };
+            playTone();
+            ringInterval = setInterval(playTone, 4000);
+        }
+
+        function stopRinging() { clearInterval(ringInterval); ringInterval = null; }
+
+        // --- ЛОГИКА ЧАТА ---
+        function renderContacts() {
+            const list = document.getElementById('contact-list');
+            list.innerHTML = "";
+            contacts.forEach(c => {
+                const div = document.createElement('div');
+                div.className = `p-4 flex items-center gap-4 cursor-pointer border-b ${activeId === c.id ? 'active-chat' : ''}`;
+                div.innerHTML = `<div class="w-12 h-12 rounded-full bg-blue-400 text-white flex items-center justify-center font-bold text-xl">${c.name[0]}</div>
+                                 <div class="font-bold text-sm">${c.name}</div>`;
+                div.onclick = () => {
+                    activeId = c.id;
+                    document.getElementById('chat-header').classList.remove('hidden');
+                    document.getElementById('input-area').classList.remove('hidden');
+                    document.getElementById('empty-msg').classList.add('hidden');
+                    document.getElementById('chat-title').innerText = c.name;
+                    document.getElementById('active-av').innerText = c.name[0];
+                    renderContacts(); loadHistory();
+                };
+                list.appendChild(div);
+            });
+        }
+
+        function sendMessage() {
+            const inp = document.getElementById('msg-input');
+            if(!inp.value.trim()) return;
+            saveMsg({ text: inp.value, isMine: true, type: 'text' });
+            inp.value = "";
+        }
+
+        function sendSticker(emoji) {
+            saveMsg({ text: emoji, isMine: true, type: 'sticker' });
+            document.getElementById('sticker-panel').classList.add('hidden');
+        }
+
+        function saveMsg(msg) {
+            if(!histories[activeId]) histories[activeId] = [];
+            histories[activeId].push(msg);
+            localStorage.setItem('wb_histories', JSON.stringify(histories));
+            appendMsg(msg);
+        }
+
+        function appendMsg(m) {
+            const win = document.getElementById('chat-window');
+            const div = document.createElement('div');
+            div.className = m.isMine ? "self-end" : "self-start";
+            div.innerHTML = m.type === 'sticker'
+                ? `<div class="text-[80px]">${m.text}</div>`
+                : `<div class="${m.isMine ? 'bg-[#effdde]' : 'bg-white'} p-2.5 px-4 rounded-2xl shadow-sm text-sm border">${m.text}</div>`;
+            win.appendChild(div);
+            win.scrollTop = win.scrollHeight;
+        }
+
+        function loadHistory() {
+            document.getElementById('chat-window').innerHTML = "";
+            (histories[activeId] || []).forEach(appendMsg);
+        }
+
+        function addNewContact() {
+            const name = prompt("Имя контакта:");
+            if(name) {
+                const id = 'id_' + Date.now();
+                contacts.push({id, name});
+                localStorage.setItem('wb_contacts', JSON.stringify(contacts));
+                renderContacts();
+            }
+        }
+
+        async function initCall(type) {
+            document.getElementById('call-name').innerText = document.getElementById('chat-title').innerText;
+            document.getElementById('call-overlay').classList.remove('hidden');
+            startRinging();
+            if(type === 'Видео') {
+                try {
+                    localStream = await navigator.mediaDevices.getUserMedia({video:true, audio:true});
+                    document.getElementById('local-video').srcObject = localStream;
+                    document.getElementById('local-video').classList.remove('hidden');
+                    setTimeout(() => {
+                        stopRinging();
+                        document.getElementById('remote-video').srcObject = localStream;
+                    }, 3000);
+                } catch(e) { endCall(); }
+            }
+        }
+
+        function endCall() {
+            stopRinging();
+            document.getElementById('call-overlay').classList.add('hidden');
+            if(localStream) localStream.getTracks().forEach(t => t.stop());
+        }
+
+        function toggleSettings() {
+            document.getElementById('settings-modal').classList.toggle('hidden');
+            if(user) document.getElementById('profile-info').innerText = `${user.name}\n${user.phone}`;
+        }
+
+        function toggleStickers() { document.getElementById('sticker-panel').classList.toggle('hidden'); }
+
+        renderContacts();
+    </script>
+</body>
+</html>
