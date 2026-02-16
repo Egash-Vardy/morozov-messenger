@@ -5,96 +5,92 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <title>Morozov Ultra Call Pro</title>
+    <title>Morozov Ultra Real-Time</title>
     <style>
         html, body { height: 100%; margin: 0; overflow: hidden; font-family: sans-serif; }
         .hidden { display: none !important; }
         #chat-window { background-color: #e5ddd5; background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); }
-        .msg { max-width: 80%; padding: 10px; border-radius: 15px; margin-bottom: 5px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
+        .msg { max-width: 80%; padding: 10px; border-radius: 15px; margin-bottom: 5px; }
         .msg-mine { background: #effdde; align-self: flex-end; }
         .msg-their { background: #fff; align-self: flex-start; }
-        .btn-call-opt { width: 55px; height: 55px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.2); color: white; border: 1px solid white; }
-        .btn-call-opt.off { background: rgba(239, 68, 68, 0.8); border: none; }
-        .sticker-msg { font-size: 60px; background: none !important; box-shadow: none !important; }
-        #v-local { transform: scaleX(-1); background: #222; }
+        
+        /* Видео */
+        #v-remote { width: 100%; height: 100%; object-cover: cover; background: #111; }
+        #v-local { position: absolute; top: 20px; right: 20px; width: 120px; height: 160px; border-radius: 15px; border: 2px solid white; object-fit: cover; z-index: 10; transform: scaleX(-1); }
+        .call-btns { position: absolute; bottom: 40px; left: 0; right: 0; display: flex; justify-content: center; gap: 20px; z-index: 20; }
+        .btn-round { width: 65px; height: 65px; border-radius: 50%; display: flex; items-center: center; justify-content: center; color: white; font-size: 24px; shadow: 0 4px 15px rgba(0,0,0,0.3); }
     </style>
 </head>
 <body class="bg-gray-100">
 
-    <div id="auth-screen" class="fixed inset-0 z-[9999] bg-[#2b5278] flex items-center justify-center p-6">
-        <div class="bg-white w-full max-w-sm rounded-3xl p-8 text-center shadow-2xl">
-            <h2 class="text-3xl font-bold mb-6 text-gray-800">Morozov Ultra</h2>
-            <input id="auth-email" type="email" placeholder="Email" class="w-full p-4 mb-3 bg-gray-50 border rounded-2xl outline-none">
-            <input id="auth-pass" type="password" placeholder="Пароль" class="w-full p-4 mb-6 bg-gray-50 border rounded-2xl outline-none">
-            <button onclick="window.handleAuth()" class="w-full bg-[#3390ec] text-white py-4 rounded-2xl font-bold shadow-lg">ВОЙТИ</button>
+    <div id="auth-screen" class="fixed inset-0 z-[9999] bg-[#2b5278] flex items-center justify-center p-6 text-white text-center">
+        <div class="bg-white text-black w-full max-w-sm rounded-3xl p-8 shadow-2xl">
+            <h2 class="text-3xl font-bold mb-6">Morozov Ultra</h2>
+            <input id="auth-email" type="email" placeholder="Email" class="w-full p-4 mb-3 border rounded-xl outline-none">
+            <input id="auth-pass" type="password" placeholder="Пароль" class="w-full p-4 mb-6 border rounded-xl outline-none">
+            <button onclick="window.handleAuth()" class="w-full bg-[#3390ec] text-white py-4 rounded-xl font-bold">ВОЙТИ / РЕГ</button>
         </div>
     </div>
 
-    <div id="main-list-screen" class="flex flex-col h-full bg-white">
-        <header class="bg-[#517da2] h-16 flex items-center justify-between px-4 text-white shrink-0 shadow-md">
+    <div id="main-app" class="hidden flex flex-col h-full bg-white">
+        <header class="bg-[#517da2] h-16 flex items-center justify-between px-4 text-white shadow-md">
             <button onclick="window.toggleMenu()" class="text-xl p-2"><i class="fas fa-bars"></i></button>
-            <span class="font-bold text-lg">Чаты</span>
+            <span class="font-bold">Чаты</span>
             <div class="w-10"></div>
         </header>
         <div id="c-list" class="flex-1 overflow-y-auto"></div>
     </div>
 
     <div id="side-menu" class="hidden fixed inset-0 z-[5000] bg-white flex flex-col">
-        <div class="bg-[#517da2] p-10 text-white flex items-center gap-4">
-            <button onclick="window.toggleMenu()" class="text-2xl"><i class="fas fa-arrow-left"></i></button>
-            <div class="font-bold text-xl">Меню</div>
+        <div class="bg-[#517da2] p-10 text-white">
+            <button onclick="window.toggleMenu()" class="text-2xl mb-4"><i class="fas fa-arrow-left"></i></button>
+            <div class="font-bold text-lg">Мой ID (скопируй другу):</div>
+            <div id="my-uid-display" class="bg-[#416a8e] p-2 mt-2 rounded text-xs break-all select-all">Загрузка...</div>
         </div>
         <div class="p-6 flex flex-col gap-4">
             <button onclick="window.addFriend()" class="text-left p-5 bg-gray-50 rounded-2xl border flex items-center gap-4"><i class="fas fa-user-plus text-blue-500"></i> Добавить друга</button>
-            <button onclick="window.logout()" class="text-left p-5 text-red-500 border rounded-2xl flex items-center gap-4"><i class="fas fa-sign-out-alt"></i> Выйти</button>
+            <button onclick="window.logout()" class="text-left p-5 text-red-500 border rounded-2xl flex items-center gap-4"><i class="fas fa-sign-out-alt"></i> Выход</button>
         </div>
     </div>
 
     <div id="chat-screen" class="hidden fixed inset-0 z-[4000] bg-white flex flex-col">
-        <header class="bg-[#517da2] h-16 flex items-center justify-between px-4 text-white shrink-0">
+        <header class="bg-[#517da2] h-16 flex items-center justify-between px-4 text-white">
             <div class="flex items-center gap-3">
                 <button onclick="window.closeChat()" class="text-xl p-2"><i class="fas fa-arrow-left"></i></button>
                 <span id="chat-target-name" class="font-bold"></span>
             </div>
-            <div class="flex gap-6">
-                <button onclick="window.startCall('video')" class="text-xl p-2"><i class="fas fa-video"></i></button>
-                <button onclick="window.startCall('audio')" class="text-xl p-2"><i class="fas fa-phone-alt"></i></button>
-            </div>
+            <button onclick="window.startCall()" class="text-xl p-2"><i class="fas fa-video"></i></button>
         </header>
         <div id="chat-window" class="flex-1 overflow-y-auto p-4 flex flex-col"></div>
-        
-        <div id="sticker-panel" class="hidden p-4 bg-gray-50 grid grid-cols-5 gap-4 border-t">
-            <button onclick="window.sendSticker('🔥')" class="text-4xl">🔥</button>
-            <button onclick="window.sendSticker('😂')" class="text-4xl">😂</button>
-            <button onclick="window.sendSticker('❤️')" class="text-4xl">❤️</button>
-            <button onclick="window.sendSticker('👍')" class="text-4xl">👍</button>
-            <button onclick="window.sendSticker('🚀')" class="text-4xl">🚀</button>
-        </div>
-
         <div class="p-4 bg-white border-t flex items-center gap-3 pb-8">
-            <button onclick="window.toggleStickers()" class="text-2xl text-gray-400"><i class="fas fa-smile"></i></button>
             <input id="m-input" type="text" onkeydown="if(event.key==='Enter') window.sendMsg()" class="flex-1 bg-gray-100 h-12 rounded-full px-6 outline-none" placeholder="Сообщение...">
             <button onclick="window.sendMsg()" class="w-12 h-12 bg-[#3390ec] text-white rounded-full flex items-center justify-center"><i class="fas fa-paper-plane"></i></button>
         </div>
     </div>
 
-    <div id="call-screen" class="fixed inset-0 bg-black z-[10000] hidden flex flex-col items-center">
-        <video id="v-local" class="w-full h-full object-cover" autoplay playsinline muted></video>
-        <div class="absolute top-16 text-center text-white">
-            <h3 id="call-name" class="text-4xl font-bold mb-2">Имя</h3>
-            <p class="text-blue-300 text-lg animate-pulse uppercase">Вызов идет...</p>
+    <div id="call-screen" class="fixed inset-0 bg-black z-[10000] hidden">
+        <video id="v-remote" autoplay playsinline></video>
+        <video id="v-local" autoplay playsinline muted></video>
+        
+        <div id="incoming-ui" class="absolute inset-0 bg-blue-900/90 flex flex-col items-center justify-center text-white hidden">
+            <h2 class="text-3xl font-bold mb-8">Вам звонят!</h2>
+            <div class="flex gap-10">
+                <button onclick="window.acceptCall()" class="btn-round bg-green-500"><i class="fas fa-phone"></i></button>
+                <button onclick="window.endCall()" class="btn-round bg-red-500"><i class="fas fa-phone-slash"></i></button>
+            </div>
         </div>
-        <div class="absolute bottom-20 flex gap-8 items-center">
-            <button onclick="window.toggleMic()" id="mic-btn" class="btn-call-opt"><i class="fas fa-microphone"></i></button>
-            <button onclick="window.endCall()" class="w-20 h-20 bg-red-600 rounded-full text-white text-3xl shadow-2xl flex items-center justify-center"><i class="fas fa-phone-slash"></i></button>
-            <button onclick="window.toggleVid()" id="vid-btn" class="btn-call-opt"><i class="fas fa-video"></i></button>
+
+        <div class="call-btns">
+            <button onclick="window.endCall()" class="btn-round bg-red-600 shadow-xl flex items-center justify-center"><i class="fas fa-phone-slash"></i></button>
         </div>
     </div>
 
+    <audio id="dial-tone" loop src="https://www.soundjay.com/phone/sounds/phone-calling-1.mp3"></audio>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, push, onChildAdded, set, get, off } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getDatabase, ref, push, onChildAdded, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDutfZZER58asyHr68zWlCx7B5k1adFhIk",
@@ -110,51 +106,38 @@
         const db = getDatabase(app);
         const auth = getAuth(app);
 
-        let currentUser = null, activeFriend = null, myStream = null;
-        let audioCtx = null, oscillator = null;
+        let currentUser = null, activeFriend = null, pc = null, localStream = null;
 
-        // ГЕНЕРАТОР ГУДКОВ "ТУУУН-ТУУУН"
-        function startDialTone() {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            oscillator = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            
-            oscillator.type = 'sine';
-            oscillator.frequency.setValueAtTime(425, audioCtx.currentTime); // Частота гудка
-            
-            gain.gain.setValueAtTime(0, audioCtx.currentTime);
-            
-            // Цикл гудка: 1 сек звук, 3 сек тишина
-            const now = audioCtx.currentTime;
-            for (let i = 0; i < 100; i++) {
-                gain.gain.setValueAtTime(0.2, now + (i * 4));
-                gain.gain.setValueAtTime(0, now + (i * 4) + 1.2);
-            }
-
-            oscillator.connect(gain);
-            gain.connect(audioCtx.destination);
-            oscillator.start();
-        }
-
-        function stopDialTone() {
-            if (oscillator) { oscillator.stop(); oscillator = null; }
-            if (audioCtx) { audioCtx.close(); audioCtx = null; }
-        }
-
-        window.toggleMenu = () => document.getElementById('side-menu').classList.toggle('hidden');
-        window.closeChat = () => document.getElementById('chat-screen').classList.add('hidden');
-        window.toggleStickers = () => document.getElementById('sticker-panel').classList.toggle('hidden');
-
+        // --- ВХОД ---
         window.handleAuth = () => {
-            const e = document.getElementById('auth-email').value;
-            const p = document.getElementById('auth-pass').value;
-            signInWithEmailAndPassword(auth, e, p).catch(err => alert("Ошибка входа"));
+            const e = document.getElementById('auth-email').value, p = document.getElementById('auth-pass').value;
+            signInWithEmailAndPassword(auth, e, p).catch(() => createUserWithEmailAndPassword(auth, e, p));
         };
 
         onAuthStateChanged(auth, (user) => {
-            if (user) { currentUser = user; document.getElementById('auth-screen').classList.add('hidden'); window.renderFriends(); }
-            else { document.getElementById('auth-screen').classList.remove('hidden'); }
+            if (user) {
+                currentUser = user;
+                document.getElementById('auth-screen').classList.add('hidden');
+                document.getElementById('main-app').classList.remove('hidden');
+                document.getElementById('my-uid-display').innerText = user.uid;
+                window.renderFriends();
+                listenForCalls();
+            } else {
+                document.getElementById('auth-screen').classList.remove('hidden');
+            }
         });
+
+        // --- ЧАТ И ДРУЗЬЯ ---
+        window.renderFriends = () => {
+            const l = document.getElementById('c-list'); l.innerHTML = "";
+            JSON.parse(localStorage.getItem('f_list') || "[]").forEach(f => {
+                const d = document.createElement('div');
+                d.className = "p-5 border-b flex items-center gap-4 cursor-pointer active:bg-gray-100";
+                d.innerHTML = `<div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">${f.name[0]}</div><b>${f.name}</b>`;
+                d.onclick = () => window.openChat(f);
+                l.appendChild(d);
+            });
+        };
 
         window.openChat = (friend) => {
             activeFriend = friend;
@@ -162,74 +145,101 @@
             document.getElementById('chat-target-name').innerText = friend.name;
             document.getElementById('chat-window').innerHTML = "";
             const chatID = [currentUser.uid, friend.uid].sort().join("_");
-            onChildAdded(ref(db, 'chats/' + chatID), (snap) => {
-                const m = snap.val();
+            onChildAdded(ref(db, 'chats/' + chatID), (s) => {
+                const m = s.val();
                 const d = document.createElement('div');
-                d.className = `msg ${m.sender === currentUser.uid ? 'msg-mine' : 'msg-their'} ${m.type === 'sticker' ? 'sticker-msg' : ''}`;
+                d.className = `msg ${m.sender === currentUser.uid ? 'msg-mine' : 'msg-their'}`;
                 d.innerText = m.text;
                 document.getElementById('chat-window').appendChild(d);
-                document.getElementById('chat-window').scrollTop = 99999;
+                document.getElementById('chat-window').scrollTop = 9999;
             });
-        };
-
-        window.renderFriends = () => {
-            const list = document.getElementById('c-list');
-            list.innerHTML = "";
-            JSON.parse(localStorage.getItem('f_list') || "[]").forEach(f => {
-                const div = document.createElement('div');
-                div.className = "p-5 border-b bg-white flex items-center gap-4 cursor-pointer active:bg-gray-100";
-                div.innerHTML = `<div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">${f.name[0]}</div><b>${f.name}</b>`;
-                div.onclick = () => window.openChat(f);
-                list.appendChild(div);
-            });
-        };
-
-        window.startCall = async (type) => {
-            document.getElementById('call-screen').classList.remove('hidden');
-            document.getElementById('call-name').innerText = activeFriend.name;
-            startDialTone(); // Запуск гудков
-            try {
-                myStream = await navigator.mediaDevices.getUserMedia({video: type === 'video', audio: true});
-                document.getElementById('v-local').srcObject = myStream;
-                document.getElementById('v-local').style.display = type === 'video' ? 'block' : 'none';
-            } catch (e) { stopDialTone(); alert("Нет доступа!"); }
-        };
-
-        window.endCall = () => {
-            stopDialTone(); // Остановка гудков
-            if(myStream) myStream.getTracks().forEach(t => t.stop());
-            document.getElementById('call-screen').classList.add('hidden');
         };
 
         window.sendMsg = () => {
-            const inp = document.getElementById('m-input');
-            if(!inp.value.trim()) return;
+            const i = document.getElementById('m-input'); if(!i.value.trim()) return;
             const chatID = [currentUser.uid, activeFriend.uid].sort().join("_");
-            push(ref(db, 'chats/' + chatID), { sender: currentUser.uid, text: inp.value, type: 'text' });
-            inp.value = "";
+            push(ref(db, 'chats/' + chatID), { sender: currentUser.uid, text: i.value });
+            i.value = "";
         };
 
-        window.sendSticker = (s) => {
-            const chatID = [currentUser.uid, activeFriend.uid].sort().join("_");
-            push(ref(db, 'chats/' + chatID), { sender: currentUser.uid, text: s, type: 'sticker' });
-            window.toggleStickers();
+        // --- РЕАЛЬНЫЕ ЗВОНКИ (WebRTC) ---
+        const servers = { iceServers: [{ urls: ['stun:stun1.l.google.com:19302', 'stun:stun2.l.google.com:19302'] }] };
+
+        async function initWebRTC() {
+            pc = new RTCPeerConnection(servers);
+            localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+            document.getElementById('v-local').srcObject = localStream;
+            pc.ontrack = (event) => document.getElementById('v-remote').srcObject = event.streams[0];
+        }
+
+        window.startCall = async () => {
+            document.getElementById('call-screen').classList.remove('hidden');
+            document.getElementById('dial-tone').play();
+            await initWebRTC();
+            
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+            
+            // Отправляем сигнал другу
+            set(ref(db, 'calls/' + activeFriend.uid), {
+                offer: { type: offer.type, sdp: offer.sdp },
+                from: currentUser.uid,
+                fromName: currentUser.email.split('@')[0]
+            });
+
+            // Ждем ответа
+            onValue(ref(db, 'calls/' + activeFriend.uid + '/answer'), async (s) => {
+                if (s.exists() && pc.signalingState !== "stable") {
+                    await pc.setRemoteDescription(new RTCSessionDescription(s.val()));
+                    document.getElementById('dial-tone').pause();
+                }
+            });
+        };
+
+        function listenForCalls() {
+            onValue(ref(db, 'calls/' + currentUser.uid), async (s) => {
+                if (s.exists() && !pc) {
+                    const data = s.val();
+                    if (data.answer) return;
+                    document.getElementById('call-screen').classList.remove('hidden');
+                    document.getElementById('incoming-ui').classList.remove('hidden');
+                }
+            });
+        }
+
+        window.acceptCall = async () => {
+            document.getElementById('incoming-ui').classList.add('hidden');
+            await initWebRTC();
+            const s = await get(ref(db, 'calls/' + currentUser.uid));
+            await pc.setRemoteDescription(new RTCSessionDescription(s.val().offer));
+            const answer = await pc.createAnswer();
+            await pc.setLocalDescription(answer);
+            set(ref(db, 'calls/' + currentUser.uid + '/answer'), { type: answer.type, sdp: answer.sdp });
+        };
+
+        window.endCall = () => {
+            if(localStream) localStream.getTracks().forEach(t => t.stop());
+            if(pc) pc.close();
+            pc = null;
+            remove(ref(db, 'calls/' + (activeFriend?.uid || currentUser.uid)));
+            location.reload(); 
         };
 
         window.addFriend = () => {
-            const name = prompt("Имя:");
-            const uid = prompt("ID:");
-            if(name && uid) {
+            const n = prompt("Имя:"), id = prompt("Вставь UID друга:");
+            if(n && id) {
                 let f = JSON.parse(localStorage.getItem('f_list') || "[]");
-                f.push({name, uid});
+                f.push({name: n, uid: id});
                 localStorage.setItem('f_list', JSON.stringify(f));
                 window.renderFriends();
                 window.toggleMenu();
             }
         };
-
+        
+        window.toggleMenu = () => document.getElementById('side-menu').classList.toggle('hidden');
+        window.closeChat = () => document.getElementById('chat-screen').classList.add('hidden');
         window.logout = () => signOut(auth).then(() => location.reload());
-        window.toggleMic = () => { if(myStream) { myStream.getAudioTracks()[0].enabled = !myStream.getAudioTracks()[0].enabled; document.getElementById('mic-btn').classList.toggle('off'); } };
-        window.toggleVid = () => { if(myStream && myStream.getVideoTracks()[0]) { myStream.getVideoTracks()[0].enabled = !myStream.getVideoTracks()[0].enabled; document.getElementById('vid-btn').classList.toggle('off'); } };
     </script>
 </body>
 </html>
