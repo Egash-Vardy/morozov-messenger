@@ -5,64 +5,92 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <title>Morozov Ultra Auth</title>
+    <title>Morozov Ultra Pro</title>
     <style>
-        html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; font-family: sans-serif; }
+        html, body { height: 100%; margin: 0; overflow: hidden; font-family: sans-serif; }
         .hidden { display: none !important; }
-        #auth-screen { z-index: 9000; background: linear-gradient(135deg, #517da2 0%, #2b5278 100%); }
         #chat-window { background-color: #e5ddd5; background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); }
-        .msg { max-width: 80%; padding: 8px 14px; border-radius: 16px; margin-bottom: 5px; font-size: 15px; }
+        .msg { max-width: 80%; padding: 8px 14px; border-radius: 16px; margin-bottom: 5px; position: relative; }
         .msg-mine { background: #effdde; align-self: flex-end; border-bottom-right-radius: 4px; }
         .msg-their { background: #ffffff; align-self: flex-start; border-bottom-left-radius: 4px; }
+        .sticker { font-size: 50px; background: none !important; box-shadow: none !important; }
+        #side-menu { transition: transform 0.3s ease; z-index: 2000; width: 280px; }
+        .menu-open { transform: translateX(0) !important; }
+        .dark-mode { background: #0e1621; color: white; }
+        .dark-mode #side-menu { background: #17212b; }
+        .dark-mode .msg-their { background: #182533; color: white; }
     </style>
 </head>
 <body class="flex flex-col bg-white">
 
-    <div id="auth-screen" class="fixed inset-0 flex items-center justify-center p-6">
-        <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-8 flex flex-col gap-4 text-center">
-            <div class="w-20 h-20 bg-[#517da2] rounded-3xl mx-auto flex items-center justify-center text-white text-4xl shadow-lg mb-2">
-                <i class="fas fa-paper-plane"></i>
-            </div>
-            <h2 class="text-2xl font-bold text-gray-800">Morozov Ultra</h2>
-            <p class="text-gray-500 mb-4">Введите данные для входа</p>
-            
-            <input id="auth-email" type="email" placeholder="Email" class="w-full p-4 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-blue-400 transition">
-            <input id="auth-pass" type="password" placeholder="Пароль" class="w-full p-4 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-blue-400 transition">
-            <input id="auth-name" type="text" placeholder="Ваше Имя (для новых)" class="w-full p-4 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-blue-400 transition">
-            
-            <button onclick="handleAuth()" class="w-full bg-[#3390ec] text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition">Войти / Создать</button>
-            <p id="auth-error" class="text-red-500 text-sm hidden"></p>
+    <div id="call-overlay" class="fixed inset-0 bg-slate-900 z-[6000] hidden flex flex-col items-center justify-around text-white p-10">
+        <div class="text-center">
+            <div id="call-avatar" class="w-32 h-32 bg-blue-500 rounded-full mx-auto mb-6 flex items-center justify-center text-5xl font-bold uppercase">?</div>
+            <h2 id="call-name" class="text-4xl font-bold mb-2">Контакт</h2>
+            <p class="text-blue-400 animate-pulse text-xl">Защищенный звонок...</p>
+        </div>
+        <button onclick="window.endCall()" class="w-24 h-24 bg-red-500 rounded-full flex items-center justify-center text-4xl shadow-2xl active:scale-90 transition">
+            <i class="fas fa-phone-slash rotate-[135deg]"></i>
+        </button>
+    </div>
+
+    <div id="sticker-panel" class="fixed bottom-20 left-4 right-4 bg-white rounded-2xl shadow-2xl p-4 hidden z-[1000] grid grid-cols-5 gap-4">
+        <button onclick="window.sendSticker('😎')" class="text-4xl">😎</button>
+        <button onclick="window.sendSticker('🔥')" class="text-4xl">🔥</button>
+        <button onclick="window.sendSticker('😂')" class="text-4xl">😂</button>
+        <button onclick="window.sendSticker('❤️')" class="text-4xl">❤️</button>
+        <button onclick="window.sendSticker('👍')" class="text-4xl">👍</button>
+        <button onclick="window.sendSticker('🚀')" class="text-4xl">🚀</button>
+        <button onclick="window.sendSticker('👻')" class="text-4xl">👻</button>
+        <button onclick="window.sendSticker('💎')" class="text-4xl">💎</button>
+        <button onclick="window.sendSticker('👑')" class="text-4xl">👑</button>
+        <button onclick="window.sendSticker('🎉')" class="text-4xl">🎉</button>
+    </div>
+
+    <div id="menu-overlay" class="fixed inset-0 bg-black/50 opacity-0 pointer-events-none transition-opacity z-[1500]" onclick="window.toggleMenu()"></div>
+    <div id="side-menu" class="fixed top-0 left-0 h-full bg-white -translate-x-full shadow-2xl flex flex-col">
+        <div class="bg-[#517da2] p-8 text-white">
+            <div id="u-avatar" class="w-16 h-16 bg-blue-400 rounded-full mb-4 flex items-center justify-center text-2xl font-bold uppercase">?</div>
+            <div id="u-name" class="font-bold text-xl">Пользователь</div>
+        </div>
+        <div class="flex-1 py-4 overflow-y-auto">
+            <button onclick="window.addNewContact()" class="w-full flex items-center gap-6 px-8 py-4 active:bg-gray-100"><i class="fas fa-user-plus text-blue-500"></i> Новый контакт</button>
+            <button onclick="window.toggleDark()" class="w-full flex items-center gap-6 px-8 py-4 active:bg-gray-100"><i class="fas fa-moon text-purple-500"></i> Ночной режим</button>
+            <button onclick="window.showSettings()" class="w-full flex items-center gap-6 px-8 py-4 active:bg-gray-100"><i class="fas fa-cog text-gray-500"></i> Настройки</button>
+            <button onclick="window.logout()" class="w-full flex items-center gap-6 px-8 py-4 text-red-500 mt-4 border-t"><i class="fas fa-sign-out-alt"></i> Выход</button>
         </div>
     </div>
 
-    <div id="app-content" class="hidden flex flex-col h-full">
-        <header class="bg-[#517da2] h-16 flex items-center justify-between px-4 text-white shadow-lg shrink-0">
-            <div class="flex items-center gap-3">
-                <button id="m-btn" onclick="toggleMenu()" class="w-10 h-10 flex items-center justify-center text-xl"><i class="fas fa-bars"></i></button>
-                <button id="b-btn" onclick="closeChat()" class="hidden w-10 h-10 flex items-center justify-center text-xl"><i class="fas fa-arrow-left"></i></button>
-                <h1 id="h-title" class="font-bold text-lg">Morozov Ultra</h1>
-            </div>
-            <div id="call-box" class="hidden"><button onclick="initCall()" class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center"><i class="fas fa-phone-alt"></i></button></div>
-        </header>
-
-        <div id="contact-list-screen" class="flex-1 overflow-y-auto bg-gray-50">
-            <div id="c-list"></div>
+    <header class="bg-[#517da2] h-16 flex items-center justify-between px-4 text-white shadow-lg shrink-0 z-[1000]">
+        <div class="flex items-center gap-3">
+            <button id="m-btn" onclick="window.toggleMenu()" class="w-10 h-10 flex items-center justify-center text-xl"><i class="fas fa-bars"></i></button>
+            <button id="b-btn" onclick="window.closeChat()" class="hidden w-10 h-10 flex items-center justify-center text-xl"><i class="fas fa-arrow-left"></i></button>
+            <h1 id="h-title" class="font-bold text-lg">Morozov Ultra</h1>
         </div>
+        <div id="call-box" class="hidden flex gap-4">
+            <button onclick="window.startCall()" class="text-xl active:scale-90"><i class="fas fa-phone-alt"></i></button>
+        </div>
+    </header>
 
-        <div id="chat-screen" class="hidden fixed inset-0 flex flex-col pt-16 z-[500] bg-white">
-            <div id="chat-window" class="flex-1 overflow-y-auto p-4 flex flex-col"></div>
-            <div class="h-16 bg-white border-t flex items-center px-3 gap-2 shrink-0 pb-4">
-                <input id="m-input" type="text" onkeydown="if(event.key==='Enter') sendMsg()" class="flex-1 bg-gray-100 h-10 rounded-full px-5 outline-none" placeholder="Сообщение...">
-                <button onclick="sendMsg()" class="w-10 h-10 bg-[#3390ec] text-white rounded-full flex items-center justify-center"><i class="fas fa-paper-plane"></i></button>
-            </div>
+    <div id="app-content" class="flex-1 flex flex-col overflow-hidden">
+        <div id="c-list" class="flex-1 overflow-y-auto bg-gray-50"></div>
+    </div>
+
+    <div id="chat-screen" class="hidden fixed inset-0 flex flex-col pt-16 z-[500] bg-white">
+        <div id="chat-window" class="flex-1 overflow-y-auto p-4 flex flex-col gap-2"></div>
+        <div id="input-area" class="h-20 bg-white border-t flex items-center px-4 gap-3 shrink-0 pb-6">
+            <button onclick="window.toggleStickers()" class="text-2xl text-gray-400 active:text-blue-500"><i class="fas fa-plus-circle"></i></button>
+            <input id="m-input" type="text" onkeydown="if(event.key==='Enter') window.sendMsg()" class="flex-1 bg-gray-100 h-12 rounded-full px-6 outline-none" placeholder="Сообщение...">
+            <button onclick="window.sendMsg()" class="w-12 h-12 bg-[#3390ec] text-white rounded-full flex items-center justify-center shadow-lg"><i class="fas fa-paper-plane"></i></button>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, push, onChildAdded, set, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getDatabase, ref, push, onChildAdded, set, get, off } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
+        // ТВОЙ КОНФИГ (УЖЕ ВСТАВЛЕН)
         const firebaseConfig = {
             apiKey: "AIzaSyDutfZZER58asyHr68zWlCx7B5k1adFhIk",
             authDomain: "morozov-ultra.firebaseapp.com",
@@ -79,106 +107,117 @@
 
         let currentUser = null;
         let activeContact = null;
+        let currentChatRef = null;
 
-        // --- ЛОГИКА АВТОРИЗАЦИИ ---
-        window.handleAuth = async () => {
-            const email = document.getElementById('auth-email').value;
-            const pass = document.getElementById('auth-pass').value;
-            const name = document.getElementById('auth-name').value;
-            const errBox = document.getElementById('auth-error');
-
-            try {
-                let res = await signInWithEmailAndPassword(auth, email, pass).catch(() => {
-                    return createUserWithEmailAndPassword(auth, email, pass);
-                });
-                
-                if (name) {
-                    await set(ref(db, 'users/' + res.user.uid), { name: name, email: email });
-                }
-            } catch (err) {
-                errBox.innerText = "Ошибка: " + err.message;
-                errBox.classList.remove('hidden');
-            }
-        };
-
+        // Авторизация (используем твою логику)
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                const snapshot = await get(ref(db, 'users/' + user.uid));
-                currentUser = { uid: user.uid, ...snapshot.val() };
-                document.getElementById('auth-screen').classList.add('hidden');
-                document.getElementById('app-content').classList.remove('hidden');
-                renderContacts();
+                const snap = await get(ref(db, 'users/' + user.uid));
+                currentUser = { uid: user.uid, ...(snap.val() || {name: "User"}) };
+                document.getElementById('u-name').innerText = currentUser.name;
+                document.getElementById('u-avatar').innerText = currentUser.name[0];
+                window.renderContacts();
             } else {
-                document.getElementById('auth-screen').classList.remove('hidden');
-                document.getElementById('app-content').classList.add('hidden');
+                window.location.href = "login.html"; // Или показывай экран логина
             }
         });
 
-        window.logout = () => signOut(auth);
-
-        // --- ОСТАЛЬНАЯ ЛОГИКА ЧАТА ---
-        window.sendMsg = () => {
-            const inp = document.getElementById('m-input');
-            if(!inp.value.trim() || !activeContact) return;
-            const chatID = [currentUser.uid, activeContact.uid].sort().join("_");
-            push(ref(db, 'chats/' + chatID), {
-                sender: currentUser.uid,
-                text: inp.value,
-                time: Date.now()
-            });
-            inp.value = "";
+        // Глобальные функции
+        window.toggleMenu = () => {
+            document.getElementById('side-menu').classList.toggle('menu-open');
+            document.getElementById('menu-overlay').classList.toggle('opacity-0');
+            document.getElementById('menu-overlay').classList.toggle('pointer-events-none');
         };
 
         window.openChat = (contact) => {
             activeContact = contact;
             document.getElementById('chat-screen').classList.remove('hidden');
+            document.getElementById('m-btn').classList.add('hidden');
+            document.getElementById('b-btn').classList.remove('hidden');
+            document.getElementById('call-box').classList.remove('hidden');
             document.getElementById('h-title').innerText = contact.name;
             document.getElementById('chat-window').innerHTML = "";
+
+            if(currentChatRef) off(currentChatRef);
             const chatID = [currentUser.uid, contact.uid].sort().join("_");
-            onChildAdded(ref(db, 'chats/' + chatID), (snap) => {
+            currentChatRef = ref(db, 'chats/' + chatID);
+
+            onChildAdded(currentChatRef, (snap) => {
                 const m = snap.val();
-                appendMsg(m.text, m.sender === currentUser.uid);
+                window.appendMsg(m.text, m.sender === currentUser.uid, m.type);
             });
         };
 
-        function appendMsg(text, isMine) {
+        window.closeChat = () => {
+            document.getElementById('chat-screen').classList.add('hidden');
+            document.getElementById('m-btn').classList.remove('hidden');
+            document.getElementById('b-btn').classList.add('hidden');
+            document.getElementById('call-box').classList.add('hidden');
+            document.getElementById('sticker-panel').classList.add('hidden');
+        };
+
+        window.sendMsg = () => {
+            const inp = document.getElementById('m-input');
+            if(!inp.value.trim() || !activeContact) return;
+            window.saveToFirebase(inp.value, 'text');
+            inp.value = "";
+        };
+
+        window.sendSticker = (emoji) => {
+            window.saveToFirebase(emoji, 'sticker');
+            document.getElementById('sticker-panel').classList.add('hidden');
+        };
+
+        window.saveToFirebase = (content, type) => {
+            const chatID = [currentUser.uid, activeContact.uid].sort().join("_");
+            push(ref(db, 'chats/' + chatID), {
+                sender: currentUser.uid,
+                text: content,
+                type: type,
+                time: Date.now()
+            });
+        };
+
+        window.appendMsg = (text, isMine, type) => {
             const win = document.getElementById('chat-window');
             const d = document.createElement('div');
-            d.className = `msg ${isMine ? 'msg-mine' : 'msg-their'}`;
+            d.className = `msg ${isMine ? 'msg-mine' : 'msg-their'} ${type === 'sticker' ? 'sticker' : ''}`;
             d.innerText = text;
             win.appendChild(d);
             win.scrollTop = win.scrollHeight;
-        }
-
-        window.addNewContact = async () => {
-            const email = prompt("Email пользователя:");
-            if(email) {
-                // В реальном приложении тут был бы поиск по базе, 
-                // упростим: сохраняем в локальные контакты
-                const id = btoa(email).replace(/=/g, ""); // временный ID
-                let contacts = JSON.parse(localStorage.getItem('my_contacts') || "[]");
-                contacts.push({name: email.split('@')[0], uid: id, email: email});
-                localStorage.setItem('my_contacts', JSON.stringify(contacts));
-                renderContacts();
-            }
         };
 
-        function renderContacts() {
+        window.toggleStickers = () => document.getElementById('sticker-panel').classList.toggle('hidden');
+
+        window.startCall = () => {
+            document.getElementById('call-overlay').classList.remove('hidden');
+            document.getElementById('call-name').innerText = activeContact.name;
+            document.getElementById('call-avatar').innerText = activeContact.name[0];
+        };
+
+        window.endCall = () => document.getElementById('call-overlay').classList.add('hidden');
+
+        window.toggleDark = () => document.body.classList.toggle('dark-mode');
+
+        window.renderContacts = () => {
             const list = document.getElementById('c-list');
             list.innerHTML = "";
             const saved = JSON.parse(localStorage.getItem('my_contacts') || "[]");
             saved.forEach(c => {
                 const div = document.createElement('div');
-                div.className = "p-4 border-b flex items-center gap-4 bg-white active:bg-gray-100";
-                div.innerHTML = `<div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">${c.name[0].toUpperCase()}</div>
+                div.className = "p-4 border-b flex items-center gap-4 bg-white active:bg-gray-100 cursor-pointer dark:bg-[#17212b]";
+                div.innerHTML = `<div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">${c.name[0].toUpperCase()}</div>
                                  <div><div class="font-bold">${c.name}</div><div class="text-xs text-gray-400">${c.email}</div></div>`;
-                div.onclick = () => openChat(c);
+                div.onclick = () => window.openChat(c);
                 list.appendChild(div);
             });
-        }
+        };
+        
+        window.logout = () => signOut(auth).then(() => location.reload());
     </script>
 </body>
 </html>
+
 
 
 
