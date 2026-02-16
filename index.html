@@ -5,16 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <title>Morozov Ultra Call Edition</title>
+    <title>Morozov Ultra Pro</title>
     <style>
         html, body { height: 100%; margin: 0; overflow: hidden; font-family: sans-serif; }
         .hidden { display: none !important; }
         #chat-window { background-color: #e5ddd5; background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); }
-        .msg { max-width: 80%; padding: 10px; border-radius: 15px; margin-bottom: 5px; }
+        .msg { max-width: 80%; padding: 10px; border-radius: 15px; margin-bottom: 5px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
         .msg-mine { background: #effdde; align-self: flex-end; }
         .msg-their { background: #fff; align-self: flex-start; }
-        .btn-call-opt { width: 50px; height: 50px; border-radius: 50%; display: flex; items-center: center; justify-content: center; background: rgba(255,255,255,0.2); color: white; border: 1px solid white; }
+        .btn-call-opt { width: 55px; height: 55px; border-radius: 50%; display: flex; items-center: center; justify-content: center; background: rgba(255,255,255,0.2); color: white; border: 1px solid white; transition: all 0.2s; }
         .btn-call-opt.off { background: rgba(239, 68, 68, 0.8); border: none; }
+        .sticker-msg { font-size: 50px; background: none !important; box-shadow: none !important; }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -24,7 +25,7 @@
             <h2 class="text-3xl font-bold mb-6 text-gray-800">Morozov Ultra</h2>
             <input id="auth-email" type="email" placeholder="Email" class="w-full p-4 mb-3 bg-gray-50 border rounded-2xl outline-none">
             <input id="auth-pass" type="password" placeholder="Пароль" class="w-full p-4 mb-6 bg-gray-50 border rounded-2xl outline-none">
-            <button onclick="window.handleAuth()" class="w-full bg-[#3390ec] text-white py-4 rounded-2xl font-bold shadow-lg">ВОЙТИ</button>
+            <button onclick="window.handleAuth()" class="w-full bg-[#3390ec] text-white py-4 rounded-2xl font-bold shadow-lg active:scale-95 transition">ВОЙТИ</button>
         </div>
     </div>
 
@@ -61,7 +62,7 @@
         </header>
         <div id="chat-window" class="flex-1 overflow-y-auto p-4 flex flex-col"></div>
         
-        <div id="sticker-panel" class="hidden p-4 bg-gray-50 grid grid-cols-5 gap-4 border-t">
+        <div id="sticker-panel" class="hidden p-4 bg-gray-100 grid grid-cols-5 gap-4 border-t">
             <button onclick="window.sendSticker('🔥')" class="text-3xl">🔥</button>
             <button onclick="window.sendSticker('😂')" class="text-3xl">😂</button>
             <button onclick="window.sendSticker('❤️')" class="text-3xl">❤️</button>
@@ -72,7 +73,7 @@
         <div class="p-4 bg-white border-t flex items-center gap-3 pb-8">
             <button onclick="window.toggleStickers()" class="text-2xl text-gray-400"><i class="fas fa-smile"></i></button>
             <input id="m-input" type="text" onkeydown="if(event.key==='Enter') window.sendMsg()" class="flex-1 bg-gray-100 h-12 rounded-full px-6 outline-none" placeholder="Сообщение...">
-            <button onclick="window.sendMsg()" class="w-12 h-12 bg-[#3390ec] text-white rounded-full flex items-center justify-center active:scale-90 transition"><i class="fas fa-paper-plane"></i></button>
+            <button onclick="window.sendMsg()" class="w-12 h-12 bg-[#3390ec] text-white rounded-full flex items-center justify-center active:scale-90 transition shadow-lg"><i class="fas fa-paper-plane"></i></button>
         </div>
     </div>
 
@@ -80,18 +81,18 @@
         <video id="v-local" class="w-full h-full object-cover" autoplay playsinline muted></video>
         
         <div class="absolute top-16 text-center text-white">
-            <h3 id="call-name" class="text-3xl font-bold">Звонок...</h3>
-            <p id="call-timer" class="text-blue-300 mt-2">Вызов идет</p>
+            <h3 id="call-name" class="text-4xl font-bold">Имя</h3>
+            <p id="call-timer" class="text-blue-300 mt-2 text-lg animate-pulse">Вызов идет...</p>
         </div>
 
-        <div class="absolute bottom-16 flex gap-6 items-center">
-            <button onclick="window.toggleMic()" id="mic-btn" class="btn-call-opt"><i class="fas fa-microphone"></i></button>
-            <button onclick="window.endCall()" class="w-20 h-20 bg-red-600 rounded-full text-white text-3xl shadow-2xl flex items-center justify-center"><i class="fas fa-phone-slash"></i></button>
-            <button onclick="window.toggleVid()" id="vid-btn" class="btn-call-opt"><i class="fas fa-camera"></i></button>
+        <div class="absolute bottom-20 flex gap-8 items-center">
+            <button onclick="window.toggleMic()" id="mic-btn" class="btn-call-opt text-xl"><i class="fas fa-microphone"></i></button>
+            <button onclick="window.endCall()" class="w-20 h-20 bg-red-600 rounded-full text-white text-3xl shadow-2xl flex items-center justify-center active:scale-90 transition"><i class="fas fa-phone-slash"></i></button>
+            <button onclick="window.toggleVid()" id="vid-btn" class="btn-call-opt text-xl"><i class="fas fa-video"></i></button>
         </div>
     </div>
 
-    <audio id="dial-tone" loop src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"></audio>
+    <audio id="dial-tone" loop src="https://raw.githubusercontent.com/Anis-M/simple-calling-app/master/public/sounds/dialing.mp3"></audio>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -118,11 +119,12 @@
 
         window.toggleMenu = () => document.getElementById('side-menu').classList.toggle('hidden');
         window.closeChat = () => document.getElementById('chat-screen').classList.add('hidden');
+        window.toggleStickers = () => document.getElementById('sticker-panel').classList.toggle('hidden');
 
         window.handleAuth = () => {
             const e = document.getElementById('auth-email').value;
             const p = document.getElementById('auth-pass').value;
-            signInWithEmailAndPassword(auth, e, p).catch(err => alert("Ошибка входа"));
+            signInWithEmailAndPassword(auth, e, p).catch(err => alert("Ошибка входа!"));
         };
 
         onAuthStateChanged(auth, (user) => {
@@ -142,55 +144,75 @@
             document.getElementById('chat-window').innerHTML = "";
             
             const chatID = [currentUser.uid, friend.uid].sort().join("_");
-            onChildAdded(ref(db, 'chats/' + chatID), (snap) => {
+            const chatRef = ref(db, 'chats/' + chatID);
+            
+            onChildAdded(chatRef, (snap) => {
                 const m = snap.val();
                 const d = document.createElement('div');
-                d.className = `msg ${m.sender === currentUser.uid ? 'msg-mine' : 'msg-their'}`;
-                d.style.fontSize = m.type === 'sticker' ? '50px' : '15px';
-                d.style.background = m.type === 'sticker' ? 'none' : '';
+                d.className = `msg ${m.sender === currentUser.uid ? 'msg-mine' : 'msg-their'} ${m.type === 'sticker' ? 'sticker-msg' : ''}`;
                 d.innerText = m.text;
                 document.getElementById('chat-window').appendChild(d);
-                document.getElementById('chat-window').scrollTop = 9999;
+                document.getElementById('chat-window').scrollTop = 99999;
             });
         };
 
         window.renderFriends = () => {
-            const l = document.getElementById('c-list');
-            l.innerHTML = "";
-            JSON.parse(localStorage.getItem('f_list') || "[]").forEach(item => {
-                const d = document.createElement('div');
-                d.className = "p-5 border-b bg-white flex items-center gap-4 cursor-pointer active:bg-gray-100";
-                d.innerHTML = `<div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">${item.name[0]}</div><b>${item.name}</b>`;
-                d.onclick = () => window.openChat(item);
-                l.appendChild(d);
+            const list = document.getElementById('c-list');
+            list.innerHTML = "";
+            const friends = JSON.parse(localStorage.getItem('f_list') || "[]");
+            friends.forEach(f => {
+                const div = document.createElement('div');
+                div.className = "p-5 border-b bg-white flex items-center gap-4 cursor-pointer active:bg-gray-100";
+                div.innerHTML = `<div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">${f.name[0]}</div>
+                                 <div class="font-bold text-lg">${f.name}</div>`;
+                div.onclick = () => window.openChat(f);
+                list.appendChild(div);
             });
         };
 
-        // ЛОГИКА ЗВОНКА
+        window.sendMsg = () => {
+            const inp = document.getElementById('m-input');
+            if(!inp.value.trim()) return;
+            const chatID = [currentUser.uid, activeFriend.uid].sort().join("_");
+            push(ref(db, 'chats/' + chatID), { sender: currentUser.uid, text: inp.value, type: 'text' });
+            inp.value = "";
+        };
+
+        window.sendSticker = (s) => {
+            const chatID = [currentUser.uid, activeFriend.uid].sort().join("_");
+            push(ref(db, 'chats/' + chatID), { sender: currentUser.uid, text: s, type: 'sticker' });
+            window.toggleStickers();
+        };
+
+        // ЗВОНКИ
         window.startCall = async (type) => {
             document.getElementById('call-screen').classList.remove('hidden');
             document.getElementById('call-name').innerText = activeFriend.name;
-            document.getElementById('dial-tone').play(); // ВКЛЮЧАЕМ ГУДКИ
-            
+            const tone = document.getElementById('dial-tone');
+            tone.currentTime = 0;
+            tone.play();
+
             try {
                 myStream = await navigator.mediaDevices.getUserMedia({video: type === 'video', audio: true});
                 document.getElementById('v-local').srcObject = myStream;
-            } catch (e) { alert("Камера недоступна"); }
+                if(type === 'audio') document.getElementById('v-local').classList.add('opacity-0');
+                else document.getElementById('v-local').classList.remove('opacity-0');
+            } catch (e) { alert("Камера/Микрофон недоступны"); }
         };
 
         window.toggleMic = () => {
             if(myStream) {
-                const audioTrack = myStream.getAudioTracks()[0];
-                audioTrack.enabled = !audioTrack.enabled;
+                const track = myStream.getAudioTracks()[0];
+                track.enabled = !track.enabled;
                 document.getElementById('mic-btn').classList.toggle('off');
             }
         };
 
         window.toggleVid = () => {
             if(myStream) {
-                const videoTrack = myStream.getVideoTracks()[0];
-                if(videoTrack) {
-                    videoTrack.enabled = !videoTrack.enabled;
+                const track = myStream.getVideoTracks()[0];
+                if(track) {
+                    track.enabled = !track.enabled;
                     document.getElementById('vid-btn').classList.toggle('off');
                 }
             }
@@ -198,37 +220,24 @@
 
         window.endCall = () => {
             document.getElementById('dial-tone').pause();
-            document.getElementById('dial-tone').currentTime = 0;
             if(myStream) myStream.getTracks().forEach(t => t.stop());
             document.getElementById('call-screen').classList.add('hidden');
-        };
-
-        window.sendMsg = () => {
-            const i = document.getElementById('m-input');
-            if(!i.value.trim()) return;
-            const chatID = [currentUser.uid, activeFriend.uid].sort().join("_");
-            push(ref(db, 'chats/' + chatID), { sender: currentUser.uid, text: i.value, type: 'text' });
-            i.value = "";
-        };
-
-        window.sendSticker = (s) => {
-            const chatID = [currentUser.uid, activeFriend.uid].sort().join("_");
-            push(ref(db, 'chats/' + chatID), { sender: currentUser.uid, text: s, type: 'sticker' });
-            document.getElementById('sticker-panel').classList.add('hidden');
+            document.getElementById('mic-btn').classList.remove('off');
+            document.getElementById('vid-btn').classList.remove('off');
         };
 
         window.addFriend = () => {
-            const n = prompt("Имя:");
-            const id = prompt("ID:");
-            if(n && id) {
+            const name = prompt("Имя друга:");
+            const uid = prompt("ID друга (любой):");
+            if(name && uid) {
                 let f = JSON.parse(localStorage.getItem('f_list') || "[]");
-                f.push({name: n, uid: id});
+                f.push({name, uid});
                 localStorage.setItem('f_list', JSON.stringify(f));
                 window.renderFriends();
                 window.toggleMenu();
             }
         };
-        window.toggleStickers = () => document.getElementById('sticker-panel').classList.toggle('hidden');
+
         window.logout = () => signOut(auth).then(() => location.reload());
     </script>
 </body>
