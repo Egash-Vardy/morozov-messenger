@@ -5,23 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <title>Morozov Ultra Fix</title>
+    <title>Morozov Ultra Final</title>
     <style>
         html, body { height: 100%; margin: 0; overflow: hidden; font-family: sans-serif; }
         .hidden { display: none !important; }
         #chat-window { background-color: #e5ddd5; background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); }
-        .msg { max-width: 80%; padding: 10px; border-radius: 15px; margin-bottom: 5px; }
+        .msg { max-width: 80%; padding: 10px; border-radius: 15px; margin-bottom: 5px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
         .msg-mine { background: #effdde; align-self: flex-end; }
         .msg-their { background: #fff; align-self: flex-start; }
+        .sticker-msg { font-size: 60px; background: none !important; box-shadow: none !important; }
+        
+        /* Видео элементы */
         #v-remote { width: 100%; height: 100%; object-fit: cover; background: #111; }
         #v-local { position: absolute; top: 20px; right: 20px; width: 100px; height: 140px; border-radius: 10px; border: 2px solid white; object-fit: cover; z-index: 10; transform: scaleX(-1); }
     </style>
 </head>
 <body class="bg-gray-100">
 
-    <div id="auth-screen" class="fixed inset-0 z-[9999] bg-[#2b5278] flex items-center justify-center p-6">
-        <div class="bg-white w-full max-w-sm rounded-3xl p-8 text-center shadow-2xl">
-            <h2 class="text-3xl font-bold mb-6 text-gray-800">Morozov Ultra</h2>
+    <audio id="dial-tone" loop src="https://www.soundjay.com/phone/sounds/phone-calling-1.mp3"></audio>
+
+    <div id="auth-screen" class="fixed inset-0 z-[9999] bg-[#2b5278] flex items-center justify-center p-6 text-center">
+        <div class="bg-white text-black w-full max-w-sm rounded-3xl p-8 shadow-2xl">
+            <h2 class="text-3xl font-bold mb-6">Morozov Ultra</h2>
             <input id="auth-email" type="email" placeholder="Email" class="w-full p-4 mb-3 border rounded-xl outline-none">
             <input id="auth-pass" type="password" placeholder="Пароль" class="w-full p-4 mb-6 border rounded-xl outline-none">
             <button onclick="window.handleAuth()" class="w-full bg-[#3390ec] text-white py-4 rounded-xl font-bold active:scale-95 transition">ВОЙТИ / РЕГ</button>
@@ -31,7 +36,7 @@
     <div id="main-app" class="hidden flex flex-col h-full bg-white">
         <header class="bg-[#517da2] h-16 flex items-center justify-between px-4 text-white shadow-md">
             <button onclick="window.toggleMenu()" class="text-xl p-2"><i class="fas fa-bars"></i></button>
-            <span class="font-bold">Morozov Ultra</span>
+            <span class="font-bold">Чаты</span>
             <div class="w-10"></div>
         </header>
         <div id="c-list" class="flex-1 overflow-y-auto"></div>
@@ -42,15 +47,13 @@
             <button onclick="window.toggleMenu()" class="text-2xl mb-6"><i class="fas fa-arrow-left"></i> Назад</button>
             <div class="bg-[#416a8e] p-4 rounded-2xl border border-white/20">
                 <p class="text-xs uppercase opacity-70 mb-1">Ваш личный ID:</p>
-                <div id="my-uid-display" class="font-mono text-sm break-all mb-3">Загрузка...</div>
-                <button onclick="window.copyMyID()" class="w-full bg-white text-[#517da2] py-2 rounded-lg font-bold text-sm active:bg-gray-200">
-                    <i class="fas fa-copy"></i> СКОПИРОВАТЬ ID
-                </button>
+                <div id="my-uid-display" class="font-mono text-sm break-all mb-3 text-yellow-300 font-bold">Загрузка...</div>
+                <button onclick="window.copyMyID()" class="w-full bg-white text-[#517da2] py-2 rounded-lg font-bold text-sm active:scale-95">СКОПИРОВАТЬ ID</button>
             </div>
         </div>
-        <div class="p-6 flex flex-col gap-4">
-            <button onclick="window.addFriend()" class="text-left p-5 bg-blue-50 text-blue-700 rounded-2xl flex items-center gap-4 font-bold shadow-sm"><i class="fas fa-user-plus"></i> Добавить друга по ID</button>
-            <button onclick="window.logout()" class="text-left p-5 text-red-500 border rounded-2xl flex items-center gap-4 active:bg-red-50"><i class="fas fa-sign-out-alt"></i> Выйти из аккаунта</button>
+        <div class="p-6 flex flex-col gap-4 text-gray-700">
+            <button onclick="window.addFriend()" class="text-left p-5 bg-blue-50 rounded-2xl flex items-center gap-4 font-bold border-2 border-blue-100"><i class="fas fa-user-plus text-blue-500"></i> Добавить друга</button>
+            <button onclick="window.logout()" class="text-left p-5 text-red-500 border rounded-2xl flex items-center gap-4"><i class="fas fa-sign-out-alt"></i> Выйти</button>
         </div>
     </div>
 
@@ -58,14 +61,26 @@
         <header class="bg-[#517da2] h-16 flex items-center justify-between px-4 text-white">
             <div class="flex items-center gap-3">
                 <button onclick="window.closeChat()" class="text-xl p-2"><i class="fas fa-arrow-left"></i></button>
-                <span id="chat-target-name" class="font-bold text-lg"></span>
+                <span id="chat-target-name" class="font-bold"></span>
             </div>
-            <button onclick="window.startCall()" class="w-12 h-12 flex items-center justify-center bg-white/20 rounded-full"><i class="fas fa-video"></i></button>
+            <div class="flex gap-4">
+                <button onclick="window.startCall()" class="w-10 h-10 flex items-center justify-center bg-white/20 rounded-full"><i class="fas fa-video"></i></button>
+            </div>
         </header>
-        <div id="chat-window" class="flex-1 overflow-y-auto p-4 flex flex-col gap-2"></div>
-        <div class="p-4 bg-white border-t flex items-center gap-3 pb-10">
+        <div id="chat-window" class="flex-1 overflow-y-auto p-4 flex flex-col gap-1"></div>
+        
+        <div id="sticker-panel" class="hidden p-4 bg-gray-100 grid grid-cols-5 gap-4 border-t">
+            <button onclick="window.sendSticker('🔥')" class="text-4xl">🔥</button>
+            <button onclick="window.sendSticker('😂')" class="text-4xl">😂</button>
+            <button onclick="window.sendSticker('❤️')" class="text-4xl">❤️</button>
+            <button onclick="window.sendSticker('👍')" class="text-4xl">👍</button>
+            <button onclick="window.sendSticker('🚀')" class="text-4xl">🚀</button>
+        </div>
+
+        <div class="p-4 bg-white border-t flex items-center gap-3 pb-8">
+            <button onclick="window.toggleStickers()" class="text-2xl text-gray-400"><i class="fas fa-smile"></i></button>
             <input id="m-input" type="text" onkeydown="if(event.key==='Enter') window.sendMsg()" class="flex-1 bg-gray-100 h-12 rounded-full px-6 outline-none" placeholder="Сообщение...">
-            <button onclick="window.sendMsg()" class="w-12 h-12 bg-[#3390ec] text-white rounded-full flex items-center justify-center active:scale-90 transition"><i class="fas fa-paper-plane"></i></button>
+            <button onclick="window.sendMsg()" class="w-12 h-12 bg-[#3390ec] text-white rounded-full flex items-center justify-center"><i class="fas fa-paper-plane"></i></button>
         </div>
     </div>
 
@@ -73,12 +88,11 @@
         <video id="v-remote" autoplay playsinline></video>
         <video id="v-local" autoplay playsinline muted></video>
         
-        <div id="incoming-ui" class="absolute inset-0 bg-[#2b5278] flex flex-col items-center justify-center text-white hidden z-[30]">
-            <div class="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center text-4xl mb-6 animate-bounce"><i class="fas fa-phone"></i></div>
-            <h2 class="text-3xl font-bold mb-8">Вам звонят!</h2>
+        <div id="incoming-ui" class="absolute inset-0 bg-[#2b5278] flex flex-col items-center justify-center text-white hidden z-30">
+            <h2 class="text-3xl font-bold mb-8 animate-pulse">Вам звонят!</h2>
             <div class="flex gap-10">
-                <button onclick="window.acceptCall()" class="w-20 h-20 bg-green-500 rounded-full text-white text-3xl shadow-2xl flex items-center justify-center active:scale-90"><i class="fas fa-check"></i></button>
-                <button onclick="window.endCall()" class="w-20 h-20 bg-red-500 rounded-full text-white text-3xl shadow-2xl flex items-center justify-center active:scale-90"><i class="fas fa-times"></i></button>
+                <button onclick="window.acceptCall()" class="w-20 h-20 bg-green-500 rounded-full text-white text-3xl flex items-center justify-center"><i class="fas fa-phone"></i></button>
+                <button onclick="window.endCall()" class="w-20 h-20 bg-red-500 rounded-full text-white text-3xl flex items-center justify-center"><i class="fas fa-times"></i></button>
             </div>
         </div>
 
@@ -110,7 +124,6 @@
 
         window.handleAuth = () => {
             const e = document.getElementById('auth-email').value, p = document.getElementById('auth-pass').value;
-            if(!e || !p) return alert("Введи данные!");
             signInWithEmailAndPassword(auth, e, p).catch(() => createUserWithEmailAndPassword(auth, e, p));
         };
 
@@ -124,22 +137,19 @@
                 listenForCalls();
             } else {
                 document.getElementById('auth-screen').classList.remove('hidden');
-                document.getElementById('main-app').classList.add('hidden');
             }
         });
 
         window.copyMyID = () => {
-            const id = document.getElementById('my-uid-display').innerText;
-            navigator.clipboard.writeText(id).then(() => alert("ID скопирован! Отправь его другу."));
+            navigator.clipboard.writeText(currentUser.uid).then(() => alert("ID скопирован!"));
         };
 
         window.renderFriends = () => {
             const l = document.getElementById('c-list'); l.innerHTML = "";
-            const friends = JSON.parse(localStorage.getItem('f_list') || "[]");
-            friends.forEach(f => {
+            JSON.parse(localStorage.getItem('f_list') || "[]").forEach(f => {
                 const d = document.createElement('div');
-                d.className = "p-5 border-b bg-white flex items-center gap-4 cursor-pointer active:bg-gray-100 transition";
-                d.innerHTML = `<div class="w-12 h-12 bg-[#3390ec] rounded-full flex items-center justify-center text-white font-bold text-xl">${f.name[0].toUpperCase()}</div><div><div class="font-bold">${f.name}</div><div class="text-xs text-gray-400 italic">${f.uid.substring(0,8)}...</div></div>`;
+                d.className = "p-5 border-b bg-white flex items-center gap-4 cursor-pointer active:bg-gray-100";
+                d.innerHTML = `<div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">${f.name[0]}</div><b>${f.name}</b>`;
                 d.onclick = () => window.openChat(f);
                 l.appendChild(d);
             });
@@ -155,7 +165,7 @@
             onChildAdded(ref(db, 'chats/' + chatID), (s) => {
                 const m = s.val();
                 const d = document.createElement('div');
-                d.className = `msg ${m.sender === currentUser.uid ? 'msg-mine' : 'msg-their shadow-sm border'}`;
+                d.className = `msg ${m.sender === currentUser.uid ? 'msg-mine' : 'msg-their'} ${m.type === 'sticker' ? 'sticker-msg' : ''}`;
                 d.innerText = m.text;
                 chatWin.appendChild(d);
                 chatWin.scrollTop = 99999;
@@ -165,38 +175,36 @@
         window.sendMsg = () => {
             const i = document.getElementById('m-input'); if(!i.value.trim()) return;
             const chatID = [currentUser.uid, activeFriend.uid].sort().join("_");
-            push(ref(db, 'chats/' + chatID), { sender: currentUser.uid, text: i.value });
+            push(ref(db, 'chats/' + chatID), { sender: currentUser.uid, text: i.value, type: 'text' });
             i.value = "";
         };
 
-        // --- WEB RTC LOGIC ---
-        const servers = { iceServers: [{ urls: ['stun:stun1.l.google.com:19302', 'stun:stun2.l.google.com:19302'] }] };
+        window.sendSticker = (s) => {
+            const chatID = [currentUser.uid, activeFriend.uid].sort().join("_");
+            push(ref(db, 'chats/' + chatID), { sender: currentUser.uid, text: s, type: 'sticker' });
+            window.toggleStickers();
+        };
 
+        // --- WEB RTC + ЗВУКИ ---
         async function initWebRTC() {
-            pc = new RTCPeerConnection(servers);
+            pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
             localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
             localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
             document.getElementById('v-local').srcObject = localStream;
-            pc.ontrack = (event) => document.getElementById('v-remote').srcObject = event.streams[0];
-            
-            pc.onicecandidate = (event) => {
-                if (event.candidate) {
-                    const target = activeFriend ? activeFriend.uid : null;
-                    if(target) push(ref(db, 'calls/' + target + '/candidates'), event.candidate.toJSON());
-                }
-            };
+            pc.ontrack = (e) => document.getElementById('v-remote').srcObject = e.streams[0];
         }
 
         window.startCall = async () => {
             document.getElementById('call-screen').classList.remove('hidden');
+            document.getElementById('dial-tone').play();
             await initWebRTC();
             const offer = await pc.createOffer();
             await pc.setLocalDescription(offer);
             set(ref(db, 'calls/' + activeFriend.uid), { offer: { type: offer.type, sdp: offer.sdp }, from: currentUser.uid });
-            
             onValue(ref(db, 'calls/' + activeFriend.uid + '/answer'), async (s) => {
                 if (s.exists() && pc.signalingState !== "stable") {
                     await pc.setRemoteDescription(new RTCSessionDescription(s.val()));
+                    document.getElementById('dial-tone').pause();
                 }
             });
         };
@@ -221,6 +229,7 @@
         };
 
         window.endCall = () => {
+            document.getElementById('dial-tone').pause();
             if(localStream) localStream.getTracks().forEach(t => t.stop());
             if(pc) pc.close();
             remove(ref(db, 'calls/' + (activeFriend?.uid || currentUser.uid)));
@@ -228,7 +237,7 @@
         };
 
         window.addFriend = () => {
-            const n = prompt("Имя друга:"), id = prompt("Вставь его длинный ID (UID):");
+            const n = prompt("Имя друга:"), id = prompt("Вставь UID друга:");
             if(n && id) {
                 let f = JSON.parse(localStorage.getItem('f_list') || "[]");
                 f.push({name: n, uid: id.trim()});
@@ -240,8 +249,10 @@
         
         window.toggleMenu = () => document.getElementById('side-menu').classList.toggle('hidden');
         window.closeChat = () => document.getElementById('chat-screen').classList.add('hidden');
+        window.toggleStickers = () => document.getElementById('sticker-panel').classList.toggle('hidden');
         window.logout = () => signOut(auth).then(() => location.reload());
     </script>
 </body>
 </html>
+
 
