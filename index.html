@@ -5,97 +5,76 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <title>Morozov Ultra Pro</title>
+    <title>Morozov Ultra Final Fix</title>
     <style>
         html, body { height: 100%; margin: 0; overflow: hidden; font-family: sans-serif; }
         .hidden { display: none !important; }
         #chat-window { background-color: #e5ddd5; background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); }
-        .msg { max-width: 80%; padding: 8px 14px; border-radius: 16px; margin-bottom: 5px; position: relative; }
+        .msg { max-width: 80%; padding: 8px 14px; border-radius: 16px; margin-bottom: 5px; }
         .msg-mine { background: #effdde; align-self: flex-end; border-bottom-right-radius: 4px; }
         .msg-their { background: #ffffff; align-self: flex-start; border-bottom-left-radius: 4px; }
-        .sticker { font-size: 60px; background: none !important; box-shadow: none !important; }
         #side-menu { transition: transform 0.3s ease; z-index: 2000; width: 280px; }
         .menu-open { transform: translateX(0) !important; }
-        .dark-mode { background: #0e1621; color: white; }
-        .dark-mode #side-menu { background: #17212b; color: white; }
-        .dark-mode .msg-their { background: #182533; color: white; }
-        #video-feed { width: 100%; height: 100%; object-fit: cover; background: #222; }
+        video { width: 100%; height: 100%; object-fit: cover; background: #000; }
     </style>
 </head>
-<body class="flex flex-col bg-white transition-colors">
+<body class="flex flex-col bg-white">
 
-    <div id="call-overlay" class="fixed inset-0 bg-black z-[6000] hidden flex flex-col">
-        <video id="video-feed" autoplay playsinline muted></video>
-        <div class="absolute bottom-10 left-0 right-0 flex justify-center gap-10">
-            <button onclick="window.endCall()" class="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center text-white text-2xl shadow-xl"><i class="fas fa-phone-slash"></i></button>
+    <div id="call-screen" class="fixed inset-0 bg-black z-[9999] hidden flex flex-col">
+        <video id="local-video" autoplay playsinline muted></video>
+        <div class="absolute bottom-12 left-0 right-0 flex justify-center gap-8">
+            <button onclick="window.endCall()" class="w-16 h-16 bg-red-500 rounded-full text-white text-2xl shadow-xl"><i class="fas fa-phone-slash"></i></button>
         </div>
-        <div class="absolute top-10 left-0 right-0 text-center text-white">
-            <h2 id="call-name" class="text-2xl font-bold">Вызов...</h2>
-        </div>
+        <div class="absolute top-10 w-full text-center text-white text-xl font-bold" id="call-status">Звонок...</div>
     </div>
 
     <div id="auth-screen" class="fixed inset-0 z-[9000] bg-[#2b5278] flex items-center justify-center p-6">
-        <div class="bg-white w-full max-w-md rounded-2xl p-8 flex flex-col gap-4 text-center shadow-2xl">
+        <div class="bg-white w-full max-w-md rounded-2xl p-8 flex flex-col gap-4 text-center">
             <h2 class="text-2xl font-bold">Morozov Ultra</h2>
-            <input id="auth-email" type="email" placeholder="Email" class="p-4 bg-gray-100 rounded-xl outline-none border focus:border-blue-500">
-            <input id="auth-pass" type="password" placeholder="Пароль" class="p-4 bg-gray-100 rounded-xl outline-none border focus:border-blue-500">
-            <input id="auth-name" type="text" placeholder="Ваше Имя (только для новых)" class="p-4 bg-gray-100 rounded-xl outline-none border focus:border-blue-500">
-            <button onclick="window.handleAuth()" class="bg-[#3390ec] text-white py-4 rounded-xl font-bold active:scale-95 transition">Войти / Создать</button>
+            <input id="auth-email" type="email" placeholder="Email" class="p-4 bg-gray-100 rounded-xl outline-none">
+            <input id="auth-pass" type="password" placeholder="Пароль" class="p-4 bg-gray-100 rounded-xl outline-none">
+            <button onclick="window.handleAuth()" class="bg-[#3390ec] text-white py-4 rounded-xl font-bold">Войти</button>
         </div>
     </div>
 
     <div id="main-app" class="hidden flex flex-col h-full">
-        <header class="bg-[#517da2] h-16 flex items-center justify-between px-4 text-white shadow-lg z-50">
-            <div class="flex items-center gap-3">
-                <button onclick="window.toggleMenu()" class="w-10 h-10 text-xl"><i class="fas fa-bars"></i></button>
-                <h1 id="h-title" class="font-bold text-lg">Morozov Ultra</h1>
-            </div>
-            <div id="chat-tools" class="hidden flex gap-5">
+        <header class="bg-[#517da2] h-16 flex items-center justify-between px-4 text-white shadow-lg">
+            <button onclick="window.toggleMenu()" class="text-xl"><i class="fas fa-bars"></i></button>
+            <h1 id="h-title" class="font-bold">Чаты</h1>
+            <div id="call-btns" class="hidden flex gap-4">
                 <button onclick="window.startCall('video')" class="text-xl"><i class="fas fa-video"></i></button>
                 <button onclick="window.startCall('audio')" class="text-xl"><i class="fas fa-phone-alt"></i></button>
             </div>
         </header>
 
-        <div id="c-list" class="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900"></div>
+        <div id="c-list" class="flex-1 overflow-y-auto bg-gray-50"></div>
 
-        <div id="chat-screen" class="hidden fixed inset-0 flex flex-col pt-16 z-[1000] bg-white dark:bg-[#0e1621]">
+        <div id="side-menu" class="fixed top-0 left-0 h-full bg-white -translate-x-full shadow-2xl flex flex-col z-[2000]">
+            <div class="bg-[#517da2] p-8 text-white font-bold text-xl" id="u-name">Загрузка...</div>
+            <div class="flex-1 py-4">
+                <button onclick="window.addFriend()" class="w-full text-left px-8 py-4 active:bg-gray-100 border-b"><i class="fas fa-user-plus mr-4 text-blue-500"></i> Добавить друга</button>
+                <button onclick="window.logout()" class="w-full text-left px-8 py-4 text-red-500 mt-auto"><i class="fas fa-sign-out-alt mr-4"></i> Выход</button>
+            </div>
+        </div>
+
+        <div id="chat-screen" class="hidden fixed inset-0 flex flex-col pt-16 z-[1000] bg-white">
             <div class="absolute top-0 left-0 right-0 h-16 bg-[#517da2] flex items-center px-4 text-white">
-                <button onclick="window.closeChat()" class="mr-4 text-xl"><i class="fas fa-arrow-left"></i></button>
-                <span id="chat-target-name" class="font-bold">Чат</span>
+                <button onclick="window.closeChat()" class="mr-4"><i class="fas fa-arrow-left"></i></button>
+                <span id="chat-target-name" class="font-bold"></span>
             </div>
             <div id="chat-window" class="flex-1 overflow-y-auto p-4 flex flex-col gap-2"></div>
-            
-            <div id="sticker-panel" class="hidden bg-gray-100 p-4 grid grid-cols-5 gap-4 border-t dark:bg-[#17212b]">
-                <button onclick="window.sendSticker('🔥')" class="text-4xl">🔥</button>
-                <button onclick="window.sendSticker('😂')" class="text-4xl">😂</button>
-                <button onclick="window.sendSticker('❤️')" class="text-4xl">❤️</button>
-                <button onclick="window.sendSticker('👍')" class="text-4xl">👍</button>
-                <button onclick="window.sendSticker('🚀')" class="text-4xl">🚀</button>
+            <div class="h-20 bg-white border-t flex items-center px-4 gap-2 shrink-0 pb-4">
+                <button onclick="window.sendSticker('🔥')" class="text-2xl">🔥</button>
+                <input id="m-input" type="text" onkeydown="if(event.key==='Enter') window.sendMsg()" class="flex-1 bg-gray-100 h-12 rounded-full px-6 outline-none" placeholder="Сообщение...">
+                <button onclick="window.sendMsg()" class="w-12 h-12 bg-[#3390ec] text-white rounded-full flex items-center justify-center"><i class="fas fa-paper-plane"></i></button>
             </div>
-
-            <div class="h-20 bg-white border-t flex items-center px-4 gap-2 shrink-0 pb-4 dark:bg-[#17212b]">
-                <button onclick="window.toggleStickers()" class="text-2xl text-blue-500"><i class="fas fa-plus-circle"></i></button>
-                <input id="m-input" type="text" onkeydown="if(event.key==='Enter') window.sendMsg()" class="flex-1 bg-gray-100 dark:bg-[#242f3d] h-12 rounded-full px-6 outline-none" placeholder="Сообщение...">
-                <button onclick="window.sendMsg()" class="w-12 h-12 bg-[#3390ec] text-white rounded-full flex items-center justify-center shadow-lg"><i class="fas fa-paper-plane"></i></button>
-            </div>
-        </div>
-    </div>
-
-    <div id="side-menu" class="fixed top-0 left-0 h-full bg-white -translate-x-full shadow-2xl flex flex-col z-[2000]">
-        <div class="bg-[#517da2] p-8 text-white">
-            <div id="u-name" class="font-bold text-xl">Загрузка...</div>
-        </div>
-        <div class="flex-1 py-4">
-            <button onclick="window.addFriend()" class="w-full flex items-center gap-6 px-8 py-4 active:bg-gray-100"><i class="fas fa-user-plus text-blue-500"></i> Добавить друга</button>
-            <button onclick="window.toggleDark()" class="w-full flex items-center gap-6 px-8 py-4 active:bg-gray-100"><i class="fas fa-moon text-purple-500"></i> Темная тема</button>
-            <button onclick="window.logout()" class="w-full flex items-center gap-6 px-8 py-4 text-red-500 border-t mt-4"><i class="fas fa-sign-out-alt"></i> Выход</button>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, push, onChildAdded, set, get, off } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDutfZZER58asyHr68zWlCx7B5k1adFhIk",
@@ -113,28 +92,18 @@
 
         let currentUser = null;
         let activeFriend = null;
-        let currentChatRef = null;
 
-        // ЛОГИКА ВХОДА
-        window.handleAuth = async () => {
+        // ВХОД БЕЗ ОШИБОК РЕГИСТРАЦИИ
+        window.handleAuth = () => {
             const email = document.getElementById('auth-email').value;
             const pass = document.getElementById('auth-pass').value;
-            const name = document.getElementById('auth-name').value;
-            
-            try {
-                // Пытаемся войти, если не выходит — создаем нового
-                await signInWithEmailAndPassword(auth, email, pass).catch(async () => {
-                    const res = await createUserWithEmailAndPassword(auth, email, pass);
-                    await set(ref(db, 'users/' + res.user.uid), { name: name || "User", uid: res.user.uid });
-                });
-            } catch (e) { alert(e.message); }
+            signInWithEmailAndPassword(auth, email, pass).catch(e => alert("Ошибка: " + e.message));
         };
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                const snap = await get(ref(db, 'users/' + user.uid));
-                currentUser = { uid: user.uid, ...(snap.val() || {}) };
-                document.getElementById('u-name').innerText = currentUser.name || "User";
+                currentUser = user;
+                document.getElementById('u-name').innerText = user.email.split('@')[0];
                 document.getElementById('auth-screen').classList.add('hidden');
                 document.getElementById('main-app').classList.remove('hidden');
                 window.renderFriends();
@@ -144,72 +113,43 @@
             }
         });
 
-        // ЧАТ И СТИКЕРЫ
-        window.sendMsg = () => {
-            const inp = document.getElementById('m-input');
-            if(!inp.value.trim()) return;
-            window.saveMsg(inp.value, 'text');
-            inp.value = "";
-        };
-
-        window.sendSticker = (emoji) => {
-            window.saveMsg(emoji, 'sticker');
-            window.toggleStickers();
-        };
-
-        window.saveMsg = (content, type) => {
-            const chatID = [currentUser.uid, activeFriend.uid].sort().join("_");
-            push(ref(db, 'chats/' + chatID), { sender: currentUser.uid, text: content, type: type });
-        };
-
-        window.openChat = (friend) => {
-            activeFriend = friend;
-            document.getElementById('chat-screen').classList.remove('hidden');
-            document.getElementById('chat-tools').classList.remove('hidden');
-            document.getElementById('chat-target-name').innerText = friend.name;
-            document.getElementById('chat-window').innerHTML = "";
-            
-            if(currentChatRef) off(currentChatRef);
-            const chatID = [currentUser.uid, friend.uid].sort().join("_");
-            currentChatRef = ref(db, 'chats/' + chatID);
-            onChildAdded(currentChatRef, (snap) => {
-                const m = snap.val();
-                const div = document.createElement('div');
-                div.className = `msg ${m.sender === currentUser.uid ? 'msg-mine' : 'msg-their'} ${m.type === 'sticker' ? 'sticker' : ''}`;
-                div.innerText = m.text;
-                document.getElementById('chat-window').appendChild(div);
-                document.getElementById('chat-window').scrollTop = 9999;
-            });
-        };
-
-        // ЗВОНКИ (АУДИО/ВИДЕО)
+        // ЗВОНКИ
         window.startCall = async (type) => {
-            document.getElementById('call-overlay').classList.remove('hidden');
-            document.getElementById('call-name').innerText = activeFriend.name;
-            if (type === 'video') {
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                    document.getElementById('video-feed').srcObject = stream;
-                } catch (e) { alert("Камера недоступна"); }
+            document.getElementById('call-screen').classList.remove('hidden');
+            if(type === 'video') {
+                const stream = await navigator.mediaDevices.getUserMedia({video: true, audio: true});
+                document.getElementById('local-video').srcObject = stream;
             }
         };
 
         window.endCall = () => {
-            const video = document.getElementById('video-feed');
-            if (video.srcObject) {
-                video.srcObject.getTracks().forEach(track => track.stop());
-            }
-            document.getElementById('call-overlay').classList.add('hidden');
+            const video = document.getElementById('local-video');
+            if(video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
+            document.getElementById('call-screen').classList.add('hidden');
         };
 
-        // НАВИГАЦИЯ
-        window.toggleMenu = () => document.getElementById('side-menu').classList.toggle('menu-open');
-        window.toggleStickers = () => document.getElementById('sticker-panel').classList.toggle('hidden');
-        window.toggleDark = () => document.body.classList.toggle('dark-mode');
-        window.closeChat = () => document.getElementById('chat-screen').classList.add('hidden');
+        // ЧАТ
+        window.openChat = (friend) => {
+            activeFriend = friend;
+            document.getElementById('chat-screen').classList.remove('hidden');
+            document.getElementById('call-btns').classList.remove('hidden');
+            document.getElementById('chat-target-name').innerText = friend.name;
+            document.getElementById('chat-window').innerHTML = "";
+            
+            const chatID = [currentUser.uid, friend.uid].sort().join("_");
+            onChildAdded(ref(db, 'chats/' + chatID), (snap) => {
+                const m = snap.val();
+                const d = document.createElement('div');
+                d.className = `msg ${m.sender === currentUser.uid ? 'msg-mine' : 'msg-their'}`;
+                d.innerText = m.text;
+                document.getElementById('chat-window').appendChild(d);
+                document.getElementById('chat-window').scrollTop = 9999;
+            });
+        };
+
         window.addFriend = () => {
             const n = prompt("Имя:");
-            const id = prompt("UID:");
+            const id = prompt("UID (можно взять любой текст):");
             if(n && id) {
                 let f = JSON.parse(localStorage.getItem('f_list') || "[]");
                 f.push({name: n, uid: id});
@@ -217,23 +157,38 @@
                 window.renderFriends();
             }
         };
+
         window.renderFriends = () => {
             const l = document.getElementById('c-list');
             l.innerHTML = "";
-            const f = JSON.parse(localStorage.getItem('f_list') || "[]");
-            f.forEach(friend => {
+            JSON.parse(localStorage.getItem('f_list') || "[]").forEach(f => {
                 const d = document.createElement('div');
-                d.className = "p-4 border-b flex items-center gap-4 active:bg-gray-100 cursor-pointer dark:border-gray-700";
-                d.innerHTML = `<div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">${friend.name[0]}</div>
-                               <div class="font-bold">${friend.name}</div>`;
-                d.onclick = () => window.openChat(friend);
+                d.className = "p-4 border-b bg-white active:bg-gray-100 cursor-pointer";
+                d.innerHTML = `<b>${f.name}</b>`;
+                d.onclick = () => window.openChat(f);
                 l.appendChild(d);
             });
         };
+
+        window.sendMsg = () => {
+            const text = document.getElementById('m-input').value;
+            const chatID = [currentUser.uid, activeFriend.uid].sort().join("_");
+            push(ref(db, 'chats/' + chatID), {sender: currentUser.uid, text: text});
+            document.getElementById('m-input').value = "";
+        };
+
+        window.sendSticker = (s) => {
+            const chatID = [currentUser.uid, activeFriend.uid].sort().join("_");
+            push(ref(db, 'chats/' + chatID), {sender: currentUser.uid, text: s});
+        };
+
+        window.toggleMenu = () => document.getElementById('side-menu').classList.toggle('menu-open');
+        window.closeChat = () => document.getElementById('chat-screen').classList.add('hidden');
         window.logout = () => signOut(auth);
     </script>
 </body>
 </html>
+
 
 
 
