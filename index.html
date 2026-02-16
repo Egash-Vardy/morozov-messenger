@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <title>Morozov Ultra FINAL</title>
+    <title>Morozov Ultra All-in-One</title>
     <style>
         html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; font-family: sans-serif; }
         .hidden { display: none !important; }
@@ -14,51 +14,46 @@
         .msg { max-width: 80%; padding: 8px 14px; border-radius: 16px; margin-bottom: 5px; font-size: 15px; }
         .msg-mine { background: #effdde; align-self: flex-end; border-bottom-right-radius: 4px; color: #000; }
         .msg-their { background: #ffffff; align-self: flex-start; border-bottom-left-radius: 4px; color: #000; }
-        .sticker { font-size: 50px; background: none !important; shadow: none !important; }
         #side-menu { transition: transform 0.3s ease; z-index: 2000; width: 280px; }
         .menu-open { transform: translateX(0) !important; }
     </style>
 </head>
 <body class="flex flex-col bg-white">
 
-    <div id="auth-screen" class="fixed inset-0 flex items-center justify-center p-6 transition-all">
+    <div id="auth-screen" class="fixed inset-0 flex items-center justify-center p-6">
         <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-8 flex flex-col gap-4 text-center">
             <h2 class="text-2xl font-bold">Morozov Ultra</h2>
-            <p class="text-gray-500 text-sm">Вход или Регистрация</p>
-            <input id="auth-email" type="email" placeholder="Email (любой)" class="p-4 bg-gray-100 rounded-xl outline-none">
+            <p class="text-gray-500 text-sm">Вход в систему</p>
+            <input id="auth-email" type="email" placeholder="Email" class="p-4 bg-gray-100 rounded-xl outline-none">
             <input id="auth-pass" type="password" placeholder="Пароль" class="p-4 bg-gray-100 rounded-xl outline-none">
-            <input id="auth-name" type="text" placeholder="Ваше Имя" class="p-4 bg-gray-100 rounded-xl outline-none">
-            <button onclick="window.handleAuth()" class="bg-[#3390ec] text-white py-4 rounded-xl font-bold active:scale-95">Войти</button>
-            <p id="auth-error" class="text-red-500 text-xs hidden"></p>
+            <input id="auth-name" type="text" placeholder="Ваше Имя (для новых)" class="p-4 bg-gray-100 rounded-xl outline-none">
+            <button onclick="window.handleAuth()" class="bg-[#3390ec] text-white py-4 rounded-xl font-bold">Войти / Регистрация</button>
         </div>
     </div>
 
     <div id="main-app" class="hidden flex flex-col h-full">
-        <header class="bg-[#517da2] h-16 flex items-center justify-between px-4 text-white shadow-lg shrink-0 z-50">
-            <div class="flex items-center gap-3">
-                <button onclick="window.toggleMenu()" class="w-10 h-10 text-xl"><i class="fas fa-bars"></i></button>
-                <h1 id="h-title" class="font-bold text-lg">Чаты</h1>
-            </div>
+        <header class="bg-[#517da2] h-16 flex items-center justify-between px-4 text-white shadow-lg shrink-0">
+            <button onclick="window.toggleMenu()" class="w-10 h-10 text-xl"><i class="fas fa-bars"></i></button>
+            <h1 id="h-title" class="font-bold text-lg">Morozov Ultra</h1>
+            <div class="w-10"></div>
         </header>
 
         <div id="c-list" class="flex-1 overflow-y-auto bg-gray-50"></div>
 
-        <div id="menu-overlay" class="fixed inset-0 bg-black/50 opacity-0 pointer-events-none transition-opacity z-[1500]" onclick="window.toggleMenu()"></div>
         <div id="side-menu" class="fixed top-0 left-0 h-full bg-white -translate-x-full shadow-2xl flex flex-col z-[2000]">
             <div class="bg-[#517da2] p-8 text-white">
-                <div id="u-name" class="font-bold text-xl">Имя</div>
+                <div id="u-name" class="font-bold text-xl text-white">Загрузка...</div>
             </div>
             <div class="flex-1 py-4">
                 <button onclick="window.addFriend()" class="w-full flex items-center gap-6 px-8 py-4 active:bg-gray-100"><i class="fas fa-user-plus text-blue-500"></i> Добавить друга</button>
-                <button onclick="window.logout()" class="w-full flex items-center gap-6 px-8 py-4 text-red-500 mt-10"><i class="fas fa-sign-out-alt"></i> Выход</button>
+                <button onclick="window.logout()" class="w-full flex items-center gap-6 px-8 py-4 text-red-500 mt-10 border-t"><i class="fas fa-sign-out-alt"></i> Выход</button>
             </div>
         </div>
 
         <div id="chat-screen" class="hidden fixed inset-0 flex flex-col pt-16 z-[1000] bg-white">
             <div class="absolute top-0 left-0 right-0 h-16 bg-[#517da2] flex items-center px-4 text-white">
                 <button onclick="window.closeChat()" class="mr-4 text-xl"><i class="fas fa-arrow-left"></i></button>
-                <span id="chat-target-name" class="font-bold">Друг</span>
-                <button onclick="window.startCall()" class="ml-auto text-xl"><i class="fas fa-phone-alt"></i></button>
+                <span id="chat-target-name" class="font-bold">Чат</span>
             </div>
             <div id="chat-window" class="flex-1 overflow-y-auto p-4 flex flex-col gap-2"></div>
             <div class="h-20 bg-white border-t flex items-center px-4 gap-2 shrink-0 pb-4">
@@ -66,11 +61,6 @@
                 <button onclick="window.sendMsg()" class="w-12 h-12 bg-[#3390ec] text-white rounded-full flex items-center justify-center"><i class="fas fa-paper-plane"></i></button>
             </div>
         </div>
-    </div>
-
-    <div id="call-screen" class="fixed inset-0 bg-slate-900 z-[9999] hidden flex flex-col items-center justify-around text-white">
-        <h2 class="text-3xl font-bold">Звонок...</h2>
-        <button onclick="window.endCall()" class="w-20 h-20 bg-red-500 rounded-full text-2xl"><i class="fas fa-phone-slash"></i></button>
     </div>
 
     <script type="module">
@@ -96,12 +86,11 @@
         let activeFriend = null;
         let currentChatRef = null;
 
-        // --- ГЛОБАЛЬНЫЕ ФУНКЦИИ ---
         window.handleAuth = async () => {
             const email = document.getElementById('auth-email').value;
             const pass = document.getElementById('auth-pass').value;
             const name = document.getElementById('auth-name').value;
-            if(!email || !pass) return alert("Введите данные");
+            if(!email || !pass) return alert("Введите email и пароль!");
 
             try {
                 let res;
@@ -109,34 +98,34 @@
                     res = await signInWithEmailAndPassword(auth, email, pass);
                 } catch {
                     res = await createUserWithEmailAndPassword(auth, email, pass);
-                    await set(ref(db, 'users/' + res.user.uid), { name: name || "Без имени", uid: res.user.uid });
+                    await set(ref(db, 'users/' + res.user.uid), { name: name || email.split('@')[0], uid: res.user.uid, email: email });
                 }
-            } catch (e) { alert(e.message); }
+            } catch (e) { alert("Ошибка: " + e.message); }
         };
 
         onAuthStateChanged(auth, async (user) => {
+            const authScr = document.getElementById('auth-screen');
+            const mainApp = document.getElementById('main-app');
             if (user) {
                 const snap = await get(ref(db, 'users/' + user.uid));
                 currentUser = { uid: user.uid, ...(snap.val() || {}) };
                 document.getElementById('u-name').innerText = currentUser.name || "User";
-                document.getElementById('auth-screen').classList.add('hidden');
-                document.getElementById('main-app').classList.remove('hidden');
+                authScr.classList.add('hidden');
+                mainApp.classList.remove('hidden');
                 window.renderFriends();
             } else {
-                document.getElementById('auth-screen').classList.remove('hidden');
-                document.getElementById('main-app').classList.add('hidden');
+                authScr.classList.remove('hidden');
+                mainApp.classList.add('hidden');
             }
         });
 
         window.toggleMenu = () => {
             document.getElementById('side-menu').classList.toggle('menu-open');
-            document.getElementById('menu-overlay').classList.toggle('opacity-0');
-            document.getElementById('menu-overlay').classList.toggle('pointer-events-none');
         };
 
         window.addFriend = () => {
             const name = prompt("Имя друга:");
-            const uid = prompt("ID друга (его почта без знаков или просто UID):");
+            const uid = prompt("UID друга (он может его скопировать в своем профиле):");
             if(name && uid) {
                 let friends = JSON.parse(localStorage.getItem('f_list') || "[]");
                 friends.push({name, uid});
@@ -153,8 +142,8 @@
             friends.forEach(f => {
                 const d = document.createElement('div');
                 d.className = "p-4 border-b bg-white flex items-center gap-4 active:bg-gray-100 cursor-pointer";
-                d.innerHTML = `<div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">${f.name[0]}</div>
-                               <div><div class="font-bold">${f.name}</div></div>`;
+                d.innerHTML = `<div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">${f.name[0].toUpperCase()}</div>
+                               <div class="font-bold">${f.name}</div>`;
                 d.onclick = () => window.openChat(f);
                 list.appendChild(d);
             });
@@ -165,7 +154,6 @@
             document.getElementById('chat-screen').classList.remove('hidden');
             document.getElementById('chat-target-name').innerText = friend.name;
             document.getElementById('chat-window').innerHTML = "";
-            
             const chatID = [currentUser.uid, friend.uid].sort().join("_");
             if(currentChatRef) off(currentChatRef);
             currentChatRef = ref(db, 'chats/' + chatID);
@@ -185,21 +173,15 @@
             const inp = document.getElementById('m-input');
             if(!inp.value.trim() || !activeFriend) return;
             const chatID = [currentUser.uid, activeFriend.uid].sort().join("_");
-            push(ref(db, 'chats/' + chatID), {
-                sender: currentUser.uid,
-                text: inp.value,
-                time: Date.now()
-            });
+            push(ref(db, 'chats/' + chatID), { sender: currentUser.uid, text: inp.value, time: Date.now() });
             inp.value = "";
         };
 
-        window.startCall = () => document.getElementById('call-screen').classList.remove('hidden');
-        window.endCall = () => document.getElementById('call-screen').classList.add('hidden');
-        window.logout = () => signOut(auth).then(() => location.reload());
-
+        window.logout = () => signOut(auth);
     </script>
 </body>
 </html>
+
 
 
 
